@@ -1,4 +1,10 @@
 const { Sequelize } = require('sequelize');
+// O Sequelize carrega o driver do Postgres dinamicamente (require em runtime).
+// Em ambientes serverless (Vercel), o empacotador faz análise estática e não
+// inclui o `pg`/`pg-hstore` no bundle -> erro "Please install pg package manually".
+// Importar aqui e passar via `dialectModule` força a inclusão e o uso direto.
+const pg = require('pg');
+require('pg-hstore');
 require('dotenv').config();
 
 // Em produção (Vercel + Supabase/Neon) o banco é acessado por uma única
@@ -9,6 +15,7 @@ const useSsl = useConnectionString || process.env.DB_SSL === 'true';
 
 const commonOptions = {
   dialect: 'postgres',
+  dialectModule: pg,
   logging: false,
   dialectOptions: useSsl
     ? { ssl: { require: true, rejectUnauthorized: false } }
