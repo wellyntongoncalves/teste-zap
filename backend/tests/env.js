@@ -1,0 +1,11 @@
+process.env.DB_NAME = 'finance_whatsapp_test';
+process.env.DB_HOST = process.env.DB_HOST || 'localhost';
+process.env.DB_PORT = process.env.DB_PORT || '5432';
+process.env.DB_USER = process.env.DB_USER || 'postgres';
+process.env.DB_PASSWORD = process.env.DB_PASSWORD || 'postgres';
+process.env.JWT_SECRET = 'test-secret-key';
+process.env.JWT_EXPIRES_IN = '15m';
+process.env.REFRESH_TOKEN_EXPIRES_IN_DAYS = '30';
+process.env.OBSIDIAN_VAULT_PATH = '';
+process.env.TWILIO_ACCOUNT_SID = '';
+process.env.TWILIO_AUTH_TOKEN = '';

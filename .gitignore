@@ -1,0 +1,17 @@
+node_modules/
+.env
+.env.local
+build/
+dist/
+*.log
+
+# Config/permissões locais do Claude Code (não versionar)
+.claude/
+
+# Saída da CLI do Vercel
+.vercel/
+
+# Vault do Obsidian: config e dados financeiros pessoais gerados localmente
+vault/.obsidian/
+vault/Gastos/
+vault/Transacoes/
