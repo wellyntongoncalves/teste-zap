@@ -48,6 +48,10 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ error: 'amount, category e accountId são obrigatórios' });
   }
 
+  // A coluna `category` é um ENUM fixo no banco; categorias fora da lista
+  // (ex: vindas do WhatsApp) caem em "Outros" em vez de quebrar a inserção.
+  const safeCategory = Transaction.CATEGORIES.includes(category) ? category : 'Outros';
+
   if (type === 'transfer' && !destinationAccountId) {
     return res.status(400).json({ error: 'destinationAccountId é obrigatório para transferências' });
   }
@@ -70,7 +74,7 @@ router.post('/', async (req, res) => {
       destinationAccountId: type === 'transfer' ? destinationAccountId : null,
       type: type || 'expense',
       amount: installmentAmount,
-      category,
+      category: safeCategory,
       description,
       source: 'dashboard',
       occurredAt: installmentDate,

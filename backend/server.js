@@ -1,7 +1,13 @@
 require('dotenv').config();
+require('express-async-errors'); // encaminha erros de rotas async para o middleware de erro (Express 4 não faz isso sozinho)
 const express = require('express');
 const cors = require('cors');
 const sequelize = require('./config/database');
+
+// Rede de segurança: em serverless, uma exceção não tratada MATA a função e a
+// requisição fica "pendurada" até o timeout. Logamos e seguimos vivos.
+process.on('unhandledRejection', (err) => console.error('unhandledRejection:', err));
+process.on('uncaughtException', (err) => console.error('uncaughtException:', err));
 
 const authRoutes = require('./routes/auth');
 const whatsappRoutes = require('./routes/whatsapp');
@@ -30,6 +36,18 @@ app.use('/api/tags', tagRoutes);
 app.use('/api/budgets', budgetRoutes);
 app.use('/api/credit-cards', creditCardRoutes);
 app.use('/api/goals', goalRoutes);
+
+// Middleware de erro: qualquer erro de rota vira uma resposta JSON limpa em vez
+// de derrubar o servidor. Erros de validação/enum do Postgres viram 400.
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  console.error('Erro na requisição:', err.message);
+  if (res.headersSent) return next(err);
+  const isValidation = /Sequelize(Validation|Database|ForeignKey|UniqueConstraint)Error/.test(err.name || '');
+  res.status(isValidation ? 400 : 500).json({
+    error: isValidation ? 'Dados inválidos na requisição' : 'Erro interno no servidor'
+  });
+});
 
 const PORT = process.env.PORT || 3000;
 

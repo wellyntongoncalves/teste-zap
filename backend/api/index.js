@@ -32,5 +32,13 @@ module.exports = async (req, res) => {
     res.end(JSON.stringify({ error: 'Erro ao conectar ao banco de dados' }));
     return;
   }
-  return app(req, res);
+  // IMPORTANTE (serverless): só resolvemos quando a resposta REALMENTE terminou.
+  // Se retornássemos `app(req, res)` direto, a promise resolveria antes de o
+  // Express terminar rotas com trabalho assíncrono (ex: fetch pro GitHub), e o
+  // ambiente do Vercel "congelaria" a execução -> a requisição travava.
+  return new Promise((resolve) => {
+    res.once('finish', resolve);
+    res.once('close', resolve);
+    app(req, res);
+  });
 };

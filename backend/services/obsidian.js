@@ -82,16 +82,24 @@ const fsBackend = {
 // --- Camada de armazenamento via API do GitHub (uso na nuvem) ---
 
 async function githubApi(method, apiPath, body) {
-  return fetch(`https://api.github.com/repos/${VAULT_REPO}/${apiPath}`, {
-    method,
-    headers: {
-      Authorization: `Bearer ${GITHUB_TOKEN}`,
-      Accept: 'application/vnd.github+json',
-      'X-GitHub-Api-Version': '2022-11-28',
-      'User-Agent': 'financas-whatsapp'
-    },
-    body: body ? JSON.stringify(body) : undefined
-  });
+  // Timeout de segurança: em serverless um fetch pendurado travaria a resposta.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
+  try {
+    return await fetch(`https://api.github.com/repos/${VAULT_REPO}/${apiPath}`, {
+      method,
+      headers: {
+        Authorization: `Bearer ${GITHUB_TOKEN}`,
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        'User-Agent': 'financas-whatsapp'
+      },
+      body: body ? JSON.stringify(body) : undefined,
+      signal: controller.signal
+    });
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function githubRead(relPath) {
