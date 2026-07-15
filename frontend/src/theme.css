@@ -1,0 +1,409 @@
+/* =========================================================================
+   MeuBolso — sistema de design
+   Tokens em :root; os componentes só falam por papel (--surface, --ink...),
+   nunca por hex cru. O dark é redefinido em dois escopos: a media query cobre
+   a preferência do SO e o [data-theme] cobre o botão do usuário, que precisa
+   ganhar nos dois sentidos.
+
+   As cores de dado (--brand-*, --good, --critical) foram validadas pelo
+   script do skill de dataviz contra estas superfícies — não trocar no olho.
+   ========================================================================= */
+
+:root {
+  color-scheme: light;
+
+  /* superfícies e neutros — viés levemente esverdeado, puxando pro acento */
+  --page: #f4f7f5;
+  --surface: #ffffff;
+  --surface-2: #f8faf9;
+  --ink: #0e1211;
+  --ink-2: #4e5654;
+  --muted: #828a87;
+  --line: #e3e8e5;
+  --line-2: #cfd6d3;
+
+  /* dado (validados: chroma >= 0.1, contraste >= 3:1 na superfície) */
+  --brand: #00966b;
+  --brand-ink: #007553; /* texto de marca: contraste WCAG em superfície clara */
+  --brand-wash: #e6f4ef;
+  --good: #0ca30c;
+  --good-ink: #006300;
+  --critical: #d03b3b;
+  --critical-ink: #b02a2a;
+  --grid: #e9edeb;
+
+  --on-brand: #ffffff;
+
+  /* forma */
+  --r-sm: 6px;
+  --r: 10px;
+  --r-lg: 14px;
+  --shadow: 0 1px 2px rgba(14, 18, 17, 0.05), 0 1px 3px rgba(14, 18, 17, 0.04);
+
+  /* tipo — system sans em tudo, inclusive nos números grandes */
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --page: #0e1211;
+    --surface: #191d1b;
+    --surface-2: #1f2422;
+    --ink: #f2f5f3;
+    --ink-2: #b4bdb9;
+    --muted: #7e8784;
+    --line: #272d2a;
+    --line-2: #39413d;
+
+    --brand: #22a583;
+    --brand-ink: #35c39d;
+    --brand-wash: #16302a;
+    --good: #0ca30c;
+    --good-ink: #3cc73c;
+    --critical: #d03b3b;
+    --critical-ink: #e96a6a;
+    --grid: #242a27;
+
+    --on-brand: #06120e;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0e1211;
+  --surface: #191d1b;
+  --surface-2: #1f2422;
+  --ink: #f2f5f3;
+  --ink-2: #b4bdb9;
+  --muted: #7e8784;
+  --line: #272d2a;
+  --line-2: #39413d;
+
+  --brand: #22a583;
+  --brand-ink: #35c39d;
+  --brand-wash: #16302a;
+  --good: #0ca30c;
+  --good-ink: #3cc73c;
+  --critical: #d03b3b;
+  --critical-ink: #e96a6a;
+  --grid: #242a27;
+
+  --on-brand: #06120e;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* ---------- tipografia ---------- */
+.h1 { font-size: 20px; font-weight: 650; letter-spacing: -0.01em; margin: 0; }
+.h2 { font-size: 17px; font-weight: 650; letter-spacing: -0.01em; margin: 0; }
+.label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.muted { color: var(--muted); }
+
+/* ---------- superfícies ---------- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow);
+}
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--line);
+}
+.card-body { padding: 18px; }
+
+/* ---------- stat tiles (KPI) ---------- */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+@media (max-width: 560px) {
+  .kpi-row { grid-template-columns: 1fr; }
+}
+.kpi {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: var(--shadow);
+}
+.kpi-top { display: flex; align-items: center; gap: 8px; }
+.kpi-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+/* figuras proporcionais no valor grande — tabular-nums só em coluna */
+.kpi-value {
+  font-size: 28px;
+  font-weight: 660;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.kpi-sub { font-size: 12.5px; color: var(--muted); }
+.kpi.is-hero { grid-column: 1 / -1; }
+
+/* número que o painel lidera: >=48px, mesma sans, figuras proporcionais */
+.hero-value {
+  font-size: clamp(38px, 9vw, 52px);
+  font-weight: 680;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+/* ---------- barra ranqueada (despesas por categoria) ---------- */
+.bars { display: flex; flex-direction: column; gap: 14px; }
+.bar-row { display: grid; gap: 6px; }
+.bar-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 13.5px;
+}
+.bar-name { color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar-val { color: var(--ink); font-weight: 600; flex: none; }
+.bar-pct { color: var(--muted); font-size: 12px; margin-left: 6px; font-weight: 400; }
+.bar-track {
+  height: 10px;
+  background: var(--grid);
+  border-radius: 999px;
+  overflow: hidden;
+}
+/* extremidade arredondada 4px ancorada na linha de base */
+.bar-fill {
+  height: 100%;
+  background: var(--brand);
+  border-radius: 0 4px 4px 0;
+  min-width: 3px;
+  transition: width 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.bar-row:hover .bar-fill { filter: brightness(1.08); }
+
+/* ---------- tabela ---------- */
+.table-wrap { overflow-x: auto; }
+table.data {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums; /* coluna alinha: aqui sim */
+}
+table.data th {
+  text-align: left;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+table.data td {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-2);
+}
+table.data tbody tr:last-child td { border-bottom: none; }
+table.data tbody tr:hover td { background: var(--surface-2); }
+td.num, th.num { text-align: right; white-space: nowrap; }
+
+/* ---------- pílula de tipo (status = cor + ícone + rótulo) ---------- */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.pill-income { color: var(--good-ink); background: color-mix(in srgb, var(--good) 12%, transparent); }
+.pill-expense { color: var(--critical-ink); background: color-mix(in srgb, var(--critical) 12%, transparent); }
+.pill-transfer { color: var(--ink-2); background: var(--surface-2); border: 1px solid var(--line); }
+
+/* ---------- controles ---------- */
+.btn {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line-2);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn:hover { background: var(--surface-2); border-color: var(--muted); }
+.btn-primary {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--on-brand);
+}
+.btn-primary:hover { filter: brightness(1.06); background: var(--brand); }
+
+.toggle {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+}
+.toggle button {
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 11px;
+  border: 0;
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+}
+.toggle button[aria-pressed="true"] { background: var(--brand-wash); color: var(--brand-ink); }
+
+/* ---------- layout ---------- */
+.app { min-height: 100vh; padding-bottom: 76px; }
+.appbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: color-mix(in srgb, var(--surface) 85%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+.appbar-inner {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.brand-mark {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-size: 17px;
+}
+.brand-badge {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: var(--brand);
+  color: var(--on-brand);
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 800;
+  flex: none;
+}
+.appbar-actions { display: flex; align-items: center; gap: 6px; }
+.icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink-2);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  font-size: 15px;
+}
+.icon-btn:hover { background: var(--surface-2); border-color: var(--line); }
+
+.main {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.tabbar-inner {
+  max-width: 980px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+.tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 9px 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: none;
+  border-top: 2px solid transparent;
+  margin-top: -1px;
+}
+.tab svg { width: 20px; height: 20px; }
+.tab.active { color: var(--brand-ink); border-top-color: var(--brand); }
+
+/* ---------- estados ---------- */
+.empty {
+  text-align: center;
+  padding: 32px 18px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.empty-mark { font-size: 26px; margin-bottom: 8px; opacity: 0.7; }
+
+/* Refetch segura o render anterior em opacidade reduzida — sem pulo de layout */
+.is-loading { opacity: 0.55; transition: opacity 0.2s; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}

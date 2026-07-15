@@ -1,39 +1,64 @@
 import React from 'react';
+import { formatMoney, formatDate } from '../../format';
 
-const TYPE_LABELS = { income: 'Receita', expense: 'Despesa', transfer: 'Transferência' };
-const TYPE_COLORS = { income: '#2e7d32', expense: '#c62828', transfer: '#455a64' };
+const TYPES = {
+  income: { label: 'Receita', className: 'pill pill-income', mark: '↑' },
+  expense: { label: 'Despesa', className: 'pill pill-expense', mark: '↓' },
+  transfer: { label: 'Transferência', className: 'pill pill-transfer', mark: '↔' }
+};
 
-export default function TransactionList({ transactions }) {
-  if (transactions.length === 0) {
-    return <p>Nenhuma transação neste mês.</p>;
+export default function TransactionList({ transactions, privateMode }) {
+  if (!transactions || transactions.length === 0) {
+    return (
+      <div className="empty">
+        <div className="empty-mark">🧾</div>
+        Nenhuma transação neste mês.
+      </div>
+    );
   }
 
   return (
-    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-      <thead>
-        <tr>
-          <th style={cellStyle}>Data</th>
-          <th style={cellStyle}>Tipo</th>
-          <th style={cellStyle}>Valor</th>
-          <th style={cellStyle}>Categoria</th>
-          <th style={cellStyle}>Descrição</th>
-        </tr>
-      </thead>
-      <tbody>
-        {transactions.map((transaction) => (
-          <tr key={transaction.id}>
-            <td style={cellStyle}>{new Date(transaction.occurredAt).toLocaleDateString('pt-BR')}</td>
-            <td style={{ ...cellStyle, color: TYPE_COLORS[transaction.type] }}>
-              {TYPE_LABELS[transaction.type] || transaction.type}
-            </td>
-            <td style={cellStyle}>R$ {parseFloat(transaction.amount).toFixed(2)}</td>
-            <td style={cellStyle}>{transaction.category}</td>
-            <td style={cellStyle}>{transaction.description}</td>
+    <div className="table-wrap">
+      <table className="data">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Tipo</th>
+            <th>Categoria</th>
+            <th>Descrição</th>
+            <th className="num">Valor</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {transactions.map((transaction) => {
+            const type = TYPES[transaction.type] || TYPES.transfer;
+            const amount = Number(transaction.amount) || 0;
+            return (
+              <tr key={transaction.id}>
+                <td style={{ whiteSpace: 'nowrap' }}>{formatDate(transaction.occurredAt)}</td>
+                <td>
+                  {/* cor + ícone + rótulo: o tipo nunca depende só da cor */}
+                  <span className={type.className}>
+                    <span aria-hidden="true">{type.mark}</span>
+                    {type.label}
+                  </span>
+                </td>
+                <td>{transaction.category}</td>
+                <td style={{ color: 'var(--muted)' }}>{transaction.description || '—'}</td>
+                <td
+                  className="num"
+                  style={{
+                    color: transaction.type === 'income' ? 'var(--good-ink)' : 'var(--ink)',
+                    fontWeight: 600
+                  }}
+                >
+                  {privateMode ? '••••' : `${transaction.type === 'expense' ? '−' : ''}${formatMoney(amount)}`}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
   );
 }
-
-const cellStyle = { border: '1px solid #ddd', padding: 8, textAlign: 'left' };
