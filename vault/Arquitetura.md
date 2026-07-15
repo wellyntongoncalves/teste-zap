@@ -13,14 +13,14 @@ WhatsApp (Twilio) --webhook--> backend/routes/whatsapp.js
                           backend/services/nlp.js (extrai valor + categoria)
                                      |
                                      v
-                          Postgres (tabela expenses)
+                          Postgres / Supabase (tabela transactions)
                                      |
                         +------------+------------+
                         v                          v
-              backend/services/obsidian.js   frontend (dashboard React)
+              backend/services/obsidian.js   frontend (PWA React)
                         |
                         v
-              vault/Gastos/<usuario>/<mes>.md
+              vault/Transacoes/<usuario>/<AAAA-MM>.md
 ```
 
 ## Componentes

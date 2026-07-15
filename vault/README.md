@@ -16,10 +16,10 @@ edição feita em uma aparece automaticamente na outra assim que o arquivo é sa
 ## Estrutura
 
 - [[Arquitetura]] — decisões técnicas e visão geral do sistema.
-- `Gastos/<usuario>/<AAAA-MM>.md` — geradas automaticamente pelo backend
-  (`backend/services/obsidian.js`) sempre que um gasto é registrado via WhatsApp
-  ou pelo dashboard. Não edite os totais manualmente; eles são recalculados
-  a cada novo gasto.
+- `Transacoes/<usuario>/<AAAA-MM>.md` — geradas automaticamente pelo backend
+  (`backend/services/obsidian.js`) sempre que uma transação é registrada via
+  WhatsApp ou pelo dashboard. Não edite os totais manualmente; eles são
+  recalculados a cada nova transação.
 
 ## Ativar a sincronização automática de gastos
 
