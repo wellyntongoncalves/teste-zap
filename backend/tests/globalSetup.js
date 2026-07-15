@@ -3,7 +3,7 @@ const { Client } = require('pg');
 
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
-const TEST_DB_NAME = 'finance_whatsapp_test';
+const TEST_DB_NAME = 'meubolso_test';
 
 module.exports = async () => {
   const client = new Client({

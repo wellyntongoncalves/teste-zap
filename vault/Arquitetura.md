@@ -2,7 +2,7 @@
 tags: arquitetura
 ---
 
-# Arquitetura — Finanças WhatsApp
+# Arquitetura — MeuBolso
 
 ## Fluxo
 

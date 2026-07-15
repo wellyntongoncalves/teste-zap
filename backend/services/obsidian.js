@@ -92,7 +92,7 @@ async function githubApi(method, apiPath, body) {
         Authorization: `Bearer ${GITHUB_TOKEN}`,
         Accept: 'application/vnd.github+json',
         'X-GitHub-Api-Version': '2022-11-28',
-        'User-Agent': 'financas-whatsapp'
+        'User-Agent': 'meubolso'
       },
       body: body ? JSON.stringify(body) : undefined,
       signal: controller.signal

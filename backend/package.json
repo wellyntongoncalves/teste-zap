@@ -1,5 +1,5 @@
 {
-  "name": "finance-whatsapp-backend",
+  "name": "meubolso-backend",
   "version": "1.0.0",
   "description": "Backend de automacao de financas pessoais via WhatsApp",
   "main": "server.js",

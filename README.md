@@ -1,4 +1,4 @@
-# Finanças WhatsApp
+# MeuBolso
 
 Gerenciador financeiro pessoal com múltiplas contas, cartão de crédito, orçamentos,
 metas e integração com WhatsApp: o usuário envia mensagens ("Gastei 50 reais no
@@ -164,7 +164,7 @@ npm test
 Usa Jest + Supertest (53 testes em 9 suítes). `tests/nlp.test.js` cobre a extração
 de valor/categoria/tipo sem depender de banco. As demais (`auth`, `accounts`,
 `transactions`, `whatsapp`, `tags`, `budgets`, `creditCards`, `goals`) sobem o app
-via `supertest` (sem precisar de `app.listen`) contra um banco `finance_whatsapp_test`
+via `supertest` (sem precisar de `app.listen`) contra um banco `meubolso_test`
 dedicado — criado automaticamente pelo `tests/globalSetup.js` caso não exista.
 Requer um Postgres acessível (local ou via `docker-compose up postgres`).
 
