@@ -212,13 +212,37 @@ da rede); apenas o HTML/JS/CSS/ícones do app shell são cacheados.
 | GET    | `/api/budgets/status`                    | Orçado vs. realizado do mês                     |
 | GET    | `/api/credit-cards/:id/invoices`         | Transações do cartão agrupadas por fatura       |
 | POST   | `/api/goals/:id/contributions`           | Adiciona valor a uma meta                       |
+| POST   | `/api/assistant`                         | Pergunta ao Vero sobre as próprias finanças     |
+| GET    | `/api/assistant/status`                  | Diz se o Vero está configurado                  |
+
+## Vero — o assistente financeiro
+
+`POST /api/assistant` responde perguntas em linguagem natural sobre as finanças
+do próprio usuário ("quanto gastei com mercado esse mês?", "onde estou
+estourando o orçamento?").
+
+Como funciona: `services/assistant.js` monta um **retrato compacto** das finanças
+(totais do mês e do anterior, despesas por categoria, contas com saldo,
+orçamentos, metas e as últimas 20 transações) e manda numa **única** chamada ao
+Claude junto da pergunta. Não há loop de ferramentas — os dados já estão todos
+aqui, então buscá-los via tool seria complexidade sem ganho.
+
+Configure a `ANTHROPIC_API_KEY` no `.env` para ligar. **Sem a chave o Vero fica
+desligado** e responde `503` — o resto da API segue funcionando. `GET
+/api/assistant/status` diz se está ligado, para a UI esconder o chat em vez de
+oferecer algo quebrado.
+
+O modelo é `claude-opus-4-8` com *thinking* adaptativo. Vale saber ao mexer:
+`budget_tokens`, `temperature`, `top_p` e `top_k` **foram removidos** nesse
+modelo e retornam 400 — a profundidade de raciocínio se controla por
+`thinking: {type:'adaptive'}` + `output_config: {effort}`.
+
+Os testes (`tests/assistant.test.js`) mockam o SDK, então rodam sem chave e sem
+rede.
 
 ## Próximos passos sugeridos
 
-- Assistente de IA ("Vero") em `/api/assistant`, usando a API da Anthropic para
-  responder perguntas em linguagem natural sobre as próprias finanças do usuário —
-  projetado no plano de implementação, mas não construído (depende de
-  `ANTHROPIC_API_KEY`, que o usuário ainda não tinha ao decidir o escopo).
+- Chat do Vero na interface (o backend já está pronto).
 - Trocar o parser por regex por uma biblioteca de NLP (ex: `natural`, ou um LLM)
   para lidar com frases mais variadas e ambíguas.
 - Reconhecimento de recibo por foto (OCR/visão) — mesma dependência de API paga.
