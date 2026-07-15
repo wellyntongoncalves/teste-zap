@@ -1,16 +1,10 @@
 const express = require('express');
 const Account = require('../models/account');
 const authMiddleware = require('../middleware/auth');
+const { computeBalance, computeBalances } = require('../services/balance');
 
 const router = express.Router();
 router.use(authMiddleware);
-
-// O saldo nunca é armazenado — é sempre recomputado a partir do saldo inicial +
-// transações da conta, pra nunca ficar dessincronizado. Até a Fase 2 (Transaction)
-// não existe nada pra somar além do saldo inicial.
-async function computeBalance(account) {
-  return parseFloat(account.initialBalance);
-}
 
 router.get('/', async (req, res) => {
   const includeArchived = req.query.includeArchived === 'true';
@@ -23,14 +17,7 @@ router.get('/', async (req, res) => {
     order: [['createdAt', 'ASC']]
   });
 
-  const withBalance = await Promise.all(
-    accounts.map(async (account) => ({
-      ...account.toJSON(),
-      balance: await computeBalance(account)
-    }))
-  );
-
-  res.json(withBalance);
+  res.json(await computeBalances(accounts));
 });
 
 router.post('/', async (req, res) => {

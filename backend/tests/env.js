@@ -1,3 +1,9 @@
+// PRIMEIRA LINHA, e não é opcional: config/database.js prefere DATABASE_URL
+// sobre as DB_* quando ela existe. Como o .env de dev aponta pro Supabase de
+// produção, deixá-la setada faria a suíte inteira rodar contra os dados reais
+// do usuário (criando e apagando registros) — o DB_NAME abaixo seria ignorado.
+delete process.env.DATABASE_URL;
+
 process.env.DB_NAME = 'meubolso_test';
 process.env.DB_HOST = process.env.DB_HOST || 'localhost';
 process.env.DB_PORT = process.env.DB_PORT || '5432';
