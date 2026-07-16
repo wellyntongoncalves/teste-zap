@@ -1,17 +1,13 @@
 import React, { useState } from 'react';
 import api from '../../api';
 import { formatMoney, formatDate } from '../../format';
+import { CATEGORIES } from '../../constants';
 
 const TYPES = {
   income: { label: 'Receita', className: 'pill pill-income', mark: '↑' },
   expense: { label: 'Despesa', className: 'pill pill-expense', mark: '↓' },
   transfer: { label: 'Transferência', className: 'pill pill-transfer', mark: '↔' }
 };
-
-const CATEGORIES = [
-  'Alimentação', 'Transporte', 'Contas', 'Saúde', 'Lazer', 'Educação', 'Compras',
-  'Salário', 'Investimentos', 'Outras Receitas', 'Outros'
-];
 
 export default function TransactionList({ transactions, privateMode, onChanged }) {
   const [editing, setEditing] = useState(null);

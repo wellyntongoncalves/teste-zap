@@ -1,10 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../api';
-
-const CATEGORIES = [
-  'Alimentação', 'Transporte', 'Contas', 'Saúde', 'Lazer', 'Educação', 'Compras',
-  'Salário', 'Investimentos', 'Outras Receitas', 'Outros'
-];
+import { CATEGORIES } from '../../constants';
 
 const TYPES = [
   { value: 'expense', label: 'Despesa' },
