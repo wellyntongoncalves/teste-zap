@@ -214,6 +214,7 @@ da rede); apenas o HTML/JS/CSS/ícones do app shell são cacheados.
 | POST   | `/api/goals/:id/contributions`           | Adiciona valor a uma meta                       |
 | POST   | `/api/assistant`                         | Pergunta ao Vero sobre as próprias finanças     |
 | GET    | `/api/assistant/status`                  | Diz se o Vero está configurado                  |
+| GET    | `/api/insights`                          | Cobranças recorrentes + projeção do mês         |
 
 ## Vero — o assistente financeiro
 
@@ -240,11 +241,43 @@ modelo e retornam 400 — a profundidade de raciocínio se controla por
 Os testes (`tests/assistant.test.js`) mockam o SDK, então rodam sem chave e sem
 rede.
 
+## Padrões e projeção
+
+`GET /api/insights` acha sozinho as cobranças que se repetem e projeta como o
+mês fecha. É lógica pura — não depende de chave nem de integração bancária.
+
+A detecção (`services/insights.js`) agrupa por descrição normalizada, então
+"Netflix 12/2025", "NETFLIX" e "Netflix" são a mesma assinatura — sem isso a
+projeção contaria a mesma cobrança três vezes. Exige três meses distintos (dois
+seria ruído: duas idas ao mercado viram "assinatura") e tolera 25% de variação,
+senão perderia justamente as contas variáveis, que são as que interessa
+projetar. Usa mediana e não média, para um mês atípico não definir o padrão.
+
+A projeção parte do saldo real das contas e só soma recorrentes que ainda não
+caíram — se a assinatura já foi debitada, ela já está no saldo.
+
+## Perguntas pelo WhatsApp
+
+O webhook roteia: mensagem com valor vira lançamento; **pergunta vai pro Vero**
+e volta respondida no próprio WhatsApp.
+
+`isQuestion()` (em `services/nlp.js`) roda **antes** do `parseAmount`, e a ordem
+é o ponto: "quanto gastei 2026" casa com o padrão de valor (o verbo colado ao
+número) e viraria uma despesa de R$ 2.026. `tests/questionRouting.test.js` trava
+esse caso — não inverta a ordem.
+
+A Twilio reenvia o webhook se a resposta demorar, então respondemos `200` na
+hora e mandamos a resposta do Vero quando fica pronta.
+
 ## Próximos passos sugeridos
 
-- Chat do Vero na interface (o backend já está pronto).
-- Trocar o parser por regex por uma biblioteca de NLP (ex: `natural`, ou um LLM)
-  para lidar com frases mais variadas e ambíguas.
+- Resumo diário pelo WhatsApp (depende do Twilio configurado).
+- Trocar o parser por regex por um LLM (mesma chave do Vero) para lidar com
+  frases mais variadas e ambíguas.
+- Áudio no WhatsApp (depende de uma API de transcrição).
+
+Fora de alcance: **Open Finance** (puxar do banco automaticamente) exige
+autorização do Banco Central e parceria com instituição financeira.
 - Reconhecimento de recibo por foto (OCR/visão) — mesma dependência de API paga.
 - Multi-moeda de verdade (conversão automática entre contas em moedas diferentes).
 - Empacotar o PWA com Capacitor/PWABuilder para publicar nas lojas, ou iniciar
