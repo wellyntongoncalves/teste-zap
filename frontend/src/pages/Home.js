@@ -4,6 +4,7 @@ import api from '../api';
 import TransactionChart from '../components/transactions/TransactionChart';
 import TransactionList from '../components/transactions/TransactionList';
 import VeroChat from '../components/assistant/VeroChat';
+import Insights from '../components/insights/Insights';
 import { formatMoney } from '../format';
 
 const MONTH_LABEL = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' });
@@ -89,6 +90,8 @@ export default function Home() {
           </span>
         </div>
       </section>
+
+      <Insights privateMode={privateMode} />
 
       <VeroChat />
 

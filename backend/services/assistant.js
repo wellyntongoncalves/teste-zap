@@ -6,6 +6,7 @@ const Budget = require('../models/budget');
 const Goal = require('../models/goal');
 const Tag = require('../models/tag');
 const { computeBalances } = require('./balance');
+const { buildInsights } = require('./insights');
 
 // Opus 4.8: `budget_tokens` e os parâmetros de sampling (temperature/top_p/top_k)
 // foram REMOVIDOS e retornam 400. A profundidade de raciocínio se controla com
@@ -122,7 +123,7 @@ async function buildContext(user) {
   const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const { start } = monthRange(now);
 
-  const [thisMonth, previousMonth, byCategory, accounts, budgets, goals, recent] = await Promise.all([
+  const [thisMonth, previousMonth, byCategory, accounts, budgets, goals, recent, insights] = await Promise.all([
     monthTotals(user.id, now),
     monthTotals(user.id, lastMonth),
     expensesByCategory(user.id, now),
@@ -133,7 +134,8 @@ async function buildContext(user) {
       where: { userId: user.id },
       order: [['occurredAt', 'DESC']],
       limit: RECENT_LIMIT
-    })
+    }),
+    buildInsights(user.id, now)
   ]);
 
   return {
@@ -145,7 +147,8 @@ async function buildContext(user) {
     accounts: await computeBalances(accounts),
     budgets,
     goals,
-    recent
+    recent,
+    insights
   };
 }
 
@@ -201,6 +204,24 @@ function formatContext(ctx) {
       lines.push(`- ${g.name}: ${brl(current)} de ${brl(target)} (${pct}%)${due}`);
     });
   }
+
+  const { recurring, monthlyRecurringCost, projection } = ctx.insights;
+
+  lines.push('', '## Cobranças recorrentes detectadas');
+  if (recurring.length === 0) {
+    lines.push('- (nenhum padrão recorrente identificado ainda)');
+  } else {
+    lines.push(`Custo fixo mensal estimado: ${brl(monthlyRecurringCost)}`);
+    recurring.forEach((r) => {
+      const label = r.type === 'income' ? 'entra' : 'sai';
+      lines.push(`- ${r.label} (${r.category}): ${brl(r.typicalAmount)} — ${label} todo dia ${r.typicalDay}, visto em ${r.occurrences} meses`);
+    });
+  }
+
+  lines.push('', '## Projeção pro fim do mês');
+  lines.push(`- Saldo somando todas as contas hoje: ${brl(projection.currentBalance)}`);
+  lines.push(`- Ainda deve entrar: ${brl(projection.expectedIncome)} | ainda deve sair: ${brl(projection.expectedExpense)}`);
+  lines.push(`- Projeção de saldo no fim do mês: ${brl(projection.projected)} (faltam ${projection.daysLeft} dias)`);
 
   lines.push('', `## Últimas ${ctx.recent.length} transações`);
   if (ctx.recent.length === 0) {

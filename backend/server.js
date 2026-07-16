@@ -18,6 +18,7 @@ const budgetRoutes = require('./routes/budgets');
 const creditCardRoutes = require('./routes/creditCards');
 const goalRoutes = require('./routes/goals');
 const assistantRoutes = require('./routes/assistant');
+const insightRoutes = require('./routes/insights');
 
 const app = express();
 
@@ -38,6 +39,7 @@ app.use('/api/budgets', budgetRoutes);
 app.use('/api/credit-cards', creditCardRoutes);
 app.use('/api/goals', goalRoutes);
 app.use('/api/assistant', assistantRoutes);
+app.use('/api/insights', insightRoutes);
 
 // Middleware de erro: qualquer erro de rota vira uma resposta JSON limpa em vez
 // de derrubar o servidor. Erros de validação/enum do Postgres viram 400.
