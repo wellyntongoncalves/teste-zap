@@ -20,6 +20,20 @@ function monthRange(month, year) {
   return { start, end };
 }
 
+// Relatórios exportados são pra um usuário brasileiro: rótulos em português e
+// valores/datas no formato de cá, não o "expense"/"75.5"/ISO cru do banco.
+const TYPE_LABELS_PT = { income: 'Receita', expense: 'Despesa', transfer: 'Transferência' };
+const SOURCE_LABELS_PT = { dashboard: 'App', whatsapp: 'WhatsApp' };
+const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+// Fixo em UTC: occurredAt de lançamento com data escolhida é gravado à meia-noite
+// UTC, então formatar em UTC devolve a data que o usuário digitou — e o relatório
+// fica igual rodando no dev (fuso local) ou no Vercel (UTC).
+const dayMonthYear = new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' });
+const monthYear = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+
+const formatBRL = (value) => brl.format(Number(value) || 0);
+const formatDatePt = (date) => dayMonthYear.format(new Date(date));
+
 router.get('/', async (req, res) => {
   const { month, year, type, accountId } = req.query;
   const { start, end } = monthRange(month, year);
@@ -217,10 +231,26 @@ router.get('/export/csv', async (req, res) => {
     raw: true
   });
 
-  const parser = new Parser({ fields: ['occurredAt', 'type', 'amount', 'category', 'description', 'source'] });
-  const csv = parser.parse(transactions);
+  const rows = transactions.map((t) => ({
+    Data: formatDatePt(t.occurredAt),
+    Tipo: TYPE_LABELS_PT[t.type] || t.type,
+    // Vírgula decimal e sem símbolo: o Excel pt-BR lê como número.
+    Valor: (Number(t.amount) || 0).toFixed(2).replace('.', ','),
+    Categoria: t.category,
+    'Descrição': t.description || '',
+    Origem: SOURCE_LABELS_PT[t.source] || t.source || ''
+  }));
 
-  res.header('Content-Type', 'text/csv');
+  // ; como separador e BOM: é o que o Excel brasileiro espera — sem isso os
+  // acentos saem quebrados e o valor com vírgula cairia na coluna errada.
+  const parser = new Parser({
+    fields: ['Data', 'Tipo', 'Valor', 'Categoria', 'Descrição', 'Origem'],
+    delimiter: ';',
+    withBOM: true
+  });
+  const csv = parser.parse(rows);
+
+  res.header('Content-Type', 'text/csv; charset=utf-8');
   res.attachment('transacoes.csv');
   res.send(csv);
 });
@@ -242,8 +272,20 @@ router.get('/export/pdf', async (req, res) => {
   res.attachment('relatorio-transacoes.pdf');
   doc.pipe(res);
 
-  doc.fontSize(18).text('Relatório de Transações', { align: 'center' });
+  doc.fontSize(18).fillColor('#111').text('Relatório de Transações', { align: 'center' });
+  // Mês/ano a partir do início do período, em UTC, pra não escorregar de mês em
+  // fusos a leste. capitalize: "julho de 2026" -> "Julho de 2026".
+  const periodStart = new Date(Date.UTC(start.getFullYear(), start.getMonth(), 1));
+  const periodo = monthYear.format(periodStart).replace(/^\w/, (c) => c.toUpperCase());
+  doc.fontSize(11).fillColor('#666').text(periodo, { align: 'center' });
   doc.moveDown();
+  doc.fillColor('#111');
+
+  if (transactions.length === 0) {
+    doc.fontSize(12).fillColor('#666').text('Nenhuma transação no período.', { align: 'center' });
+    doc.end();
+    return;
+  }
 
   let totalExpense = 0;
   let totalIncome = 0;
@@ -252,14 +294,17 @@ router.get('/export/pdf', async (req, res) => {
     if (transaction.type === 'expense') totalExpense += amount;
     if (transaction.type === 'income') totalIncome += amount;
 
-    doc.fontSize(11).text(
-      `${transaction.occurredAt.toISOString().slice(0, 10)}  |  [${transaction.type}]  |  R$ ${transaction.amount}  |  ${transaction.category}  |  ${transaction.description || ''}`
+    const tipo = TYPE_LABELS_PT[transaction.type] || transaction.type;
+    doc.fontSize(11).fillColor('#111').text(
+      `${formatDatePt(transaction.occurredAt)}   ·   ${tipo}   ·   ${formatBRL(amount)}   ·   ${transaction.category}   ·   ${transaction.description || ''}`
     );
   });
 
   doc.moveDown();
-  doc.fontSize(13).text(`Total de receitas: R$ ${totalIncome.toFixed(2)}`, { align: 'right' });
-  doc.fontSize(13).text(`Total de despesas: R$ ${totalExpense.toFixed(2)}`, { align: 'right' });
+  doc.fontSize(13).fillColor('#111');
+  doc.text(`Total de receitas: ${formatBRL(totalIncome)}`, { align: 'right' });
+  doc.text(`Total de despesas: ${formatBRL(totalExpense)}`, { align: 'right' });
+  doc.text(`Saldo do período: ${formatBRL(totalIncome - totalExpense)}`, { align: 'right' });
 
   doc.end();
 });

@@ -123,5 +123,9 @@ describe('Rotas de transações', () => {
     expect(res.status).toBe(200);
     expect(res.headers['content-type']).toMatch(/text\/csv/);
     expect(res.text).toContain('Cinema');
+    // formato brasileiro: cabeçalho e tipo em português, valor com vírgula
+    expect(res.text).toContain('Categoria');
+    expect(res.text).toContain('Despesa');
+    expect(res.text).toContain('75,50');
   });
 });
