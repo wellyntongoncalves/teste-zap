@@ -257,6 +257,160 @@ td.num, th.num { text-align: right; white-space: nowrap; }
 .pill-expense { color: var(--critical-ink); background: color-mix(in srgb, var(--critical) 12%, transparent); }
 .pill-transfer { color: var(--ink-2); background: var(--surface-2); border: 1px solid var(--line); }
 
+/* ---------- formulários ---------- */
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field > label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.input,
+.field input,
+.field select,
+.field textarea {
+  font: inherit;
+  font-size: 15px;
+  width: 100%;
+  padding: 11px 13px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--ink);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.input:focus,
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px var(--brand-wash);
+}
+.field input::placeholder,
+.field textarea::placeholder { color: var(--muted); }
+
+/* A seta nativa do select não herda a cor do tema; desenhamos a nossa. */
+.field select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%23828a87' stroke-width='2'%3E%3Cpath d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 13px center;
+  padding-right: 34px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+.form-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+/* ---------- avisos ---------- */
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 11px 14px;
+  border-radius: var(--r-sm);
+  font-size: 14px;
+  border: 1px solid;
+}
+/* cor + ícone + texto: o estado nunca depende só da cor */
+.alert-error {
+  color: var(--critical-ink);
+  background: color-mix(in srgb, var(--critical) 8%, transparent);
+  border-color: color-mix(in srgb, var(--critical) 30%, transparent);
+}
+.alert-ok {
+  color: var(--good-ink);
+  background: color-mix(in srgb, var(--good) 8%, transparent);
+  border-color: color-mix(in srgb, var(--good) 30%, transparent);
+}
+
+/* ---------- login ---------- */
+.auth-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: var(--page);
+}
+.auth-card { width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 20px; }
+.auth-brand { display: flex; align-items: center; gap: 10px; justify-content: center; font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+.auth-brand .brand-badge { width: 32px; height: 32px; border-radius: 8px; font-size: 16px; }
+
+/* ---------- barra de progresso (metas, orçamentos) ---------- */
+.meter { height: 8px; background: var(--grid); border-radius: 999px; overflow: hidden; }
+.meter > i {
+  display: block;
+  height: 100%;
+  background: var(--brand);
+  border-radius: 0 4px 4px 0;
+  transition: width 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+/* Estouro é status, não série: ganha a cor crítica — e vem sempre com rótulo. */
+.meter.is-over > i { background: var(--critical); }
+
+/* ---------- lista de itens (contas, tags, cartões) ---------- */
+.rows { display: flex; flex-direction: column; }
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+}
+.row:last-child { border-bottom: none; }
+.row:hover { background: var(--surface-2); }
+.row-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.row-title { font-weight: 600; font-size: 15px; }
+.row-sub { font-size: 12.5px; color: var(--muted); }
+.row-value { font-weight: 650; font-size: 15px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+.icon-btn-sm {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  border-radius: var(--r-sm);
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  font-size: 13px;
+  flex: none;
+}
+.icon-btn-sm:hover { color: var(--critical-ink); background: var(--surface-2); border-color: var(--line); }
+
+/* ---------- chips selecionáveis (tags) ---------- */
+.chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.chip {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--line-2);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  transition: 0.15s;
+}
+.chip:hover { border-color: var(--muted); color: var(--ink); }
+/* Selecionado carrega fundo + borda + peso — não só cor de texto. */
+.chip[aria-pressed="true"] {
+  background: var(--brand-wash);
+  border-color: var(--brand);
+  color: var(--brand-ink);
+}
+
+/* ---------- section header dentro de página ---------- */
+.page-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
 /* ---------- controles ---------- */
 .btn {
   font: inherit;

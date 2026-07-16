@@ -1,11 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../api';
+import { formatMoney } from '../../format';
 
-export default function Goals() {
+const EMPTY_FORM = { name: '', targetAmount: '', linkedAccountId: '' };
+
+export default function Goals({ privateMode }) {
   const [goals, setGoals] = useState([]);
   const [accounts, setAccounts] = useState([]);
-  const [form, setForm] = useState({ name: '', targetAmount: '', linkedAccountId: '' });
+  const [form, setForm] = useState(EMPTY_FORM);
   const [error, setError] = useState('');
+  const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [contributing, setContributing] = useState(null); // goal.id com o aporte aberto
+  const [contribution, setContribution] = useState('');
 
   useEffect(() => {
     loadGoals();
@@ -17,94 +24,196 @@ export default function Goals() {
     setGoals(data);
   }
 
+  function set(field, value) {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
   async function handleCreate(e) {
     e.preventDefault();
     setError('');
+    setSaving(true);
+
     try {
       await api.post('/goals', {
         name: form.name,
         targetAmount: parseFloat(form.targetAmount),
         linkedAccountId: form.linkedAccountId || null
       });
-      setForm({ name: '', targetAmount: '', linkedAccountId: '' });
+      setForm(EMPTY_FORM);
+      setOpen(false);
       loadGoals();
     } catch (err) {
-      setError(err.response?.data?.error || 'Falha ao criar meta');
+      setError(err.response?.data?.error || 'Não consegui criar a meta.');
+    } finally {
+      setSaving(false);
     }
   }
 
-  async function handleContribute(goal) {
-    const amount = window.prompt(`Quanto deseja adicionar à meta "${goal.name}"?`);
-    if (!amount) return;
+  async function handleContribute(e, goal) {
+    e.preventDefault();
+    const amount = parseFloat(contribution);
+    if (!amount || amount <= 0) return;
 
-    await api.post(`/goals/${goal.id}/contributions`, { amount: parseFloat(amount) });
+    await api.post(`/goals/${goal.id}/contributions`, { amount });
+    setContributing(null);
+    setContribution('');
     loadGoals();
   }
 
-  async function handleArchive(id) {
-    await api.delete(`/goals/${id}`);
+  async function handleArchive(goal) {
+    if (!window.confirm(`Arquivar a meta "${goal.name}"?`)) return;
+    await api.delete(`/goals/${goal.id}`);
     loadGoals();
   }
+
+  const money = (value) => (privateMode ? '••••' : formatMoney(value));
 
   return (
-    <div>
-      <h3>Metas financeiras</h3>
-      <form onSubmit={handleCreate} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
-        <input
-          placeholder="Nome da meta"
-          value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
-          style={{ padding: 6 }}
-          required
-        />
-        <input
-          placeholder="Valor alvo"
-          type="number"
-          value={form.targetAmount}
-          onChange={(e) => setForm({ ...form, targetAmount: e.target.value })}
-          style={{ padding: 6, width: 120 }}
-          required
-        />
-        <select
-          value={form.linkedAccountId}
-          onChange={(e) => setForm({ ...form, linkedAccountId: e.target.value })}
-          style={{ padding: 6 }}
-        >
-          <option value="">Sem conta vinculada</option>
-          {accounts.map((a) => (
-            <option key={a.id} value={a.id}>{a.name}</option>
-          ))}
-        </select>
-        <button type="submit">Criar meta</button>
-      </form>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+    <section className="card">
+      <div className="card-head">
+        <h2 className="h2">Metas</h2>
+        {!open && (
+          <button type="button" className="btn" onClick={() => setOpen(true)}>
+            <span aria-hidden="true">+</span> Nova meta
+          </button>
+        )}
+      </div>
 
-      {goals.map((goal) => {
-        const target = parseFloat(goal.targetAmount);
-        const current = parseFloat(goal.currentAmount);
-        const pct = target > 0 ? Math.min(100, (current / target) * 100) : 0;
+      {open && (
+        <form onSubmit={handleCreate} className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 14, borderBottom: '1px solid var(--line)' }}>
+          {error && (
+            <div className="alert alert-error" role="alert">
+              <span aria-hidden="true">⚠</span>
+              <span>{error}</span>
+            </div>
+          )}
 
-        return (
-          <div key={goal.id} style={{ marginBottom: 14 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>{goal.name} {goal.status === 'completed' && '✓'}</span>
-              <span>R$ {current.toFixed(2)} / R$ {target.toFixed(2)}</span>
+          <div className="form-grid">
+            <div className="field">
+              <label htmlFor="goal-name">Nome da meta</label>
+              <input id="goal-name" placeholder="Ex: Viagem em dezembro" value={form.name} onChange={(e) => set('name', e.target.value)} required />
             </div>
-            <div style={{ background: '#eee', height: 8, borderRadius: 4, marginBottom: 4 }}>
-              <div
-                style={{
-                  width: `${pct}%`,
-                  height: '100%',
-                  borderRadius: 4,
-                  background: goal.status === 'completed' ? '#2e7d32' : '#4e79a7'
-                }}
-              />
+            <div className="field">
+              <label htmlFor="goal-target">Valor alvo</label>
+              <input id="goal-target" type="number" step="0.01" min="0" inputMode="decimal" placeholder="0,00" value={form.targetAmount} onChange={(e) => set('targetAmount', e.target.value)} required />
             </div>
-            <button onClick={() => handleContribute(goal)} style={{ marginRight: 8 }}>Contribuir</button>
-            <button onClick={() => handleArchive(goal.id)}>Arquivar</button>
+            <div className="field">
+              <label htmlFor="goal-account">Conta vinculada</label>
+              <select id="goal-account" value={form.linkedAccountId} onChange={(e) => set('linkedAccountId', e.target.value)}>
+                <option value="">Nenhuma</option>
+                {accounts.map((a) => (
+                  <option key={a.id} value={a.id}>{a.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
-        );
-      })}
-    </div>
+
+          <div className="form-actions">
+            <button type="submit" className="btn btn-primary" disabled={saving}>
+              {saving ? 'Salvando…' : 'Criar meta'}
+            </button>
+            <button type="button" className="btn" onClick={() => { setOpen(false); setError(''); }}>Cancelar</button>
+          </div>
+        </form>
+      )}
+
+      {goals.length === 0 ? (
+        <div className="empty">
+          <div className="empty-mark">🎯</div>
+          Nenhuma meta ainda. Crie uma para acompanhar o quanto falta.
+        </div>
+      ) : (
+        <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+          {goals.map((goal) => {
+            const target = parseFloat(goal.targetAmount);
+            const current = parseFloat(goal.currentAmount);
+            const pct = target > 0 ? Math.min(100, (current / target) * 100) : 0;
+            const done = goal.status === 'completed';
+            const remaining = Math.max(0, target - current);
+
+            return (
+              <div key={goal.id} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div className="page-head" style={{ gap: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                    <span className="row-title">{goal.name}</span>
+                    {/* concluída carrega ícone + rótulo, não só a cor da barra */}
+                    {done && (
+                      <span className="pill pill-income">
+                        <span aria-hidden="true">✓</span> Concluída
+                      </span>
+                    )}
+                  </div>
+                  <span className="row-value">
+                    {money(current)} <span className="muted" style={{ fontWeight: 400 }}>de {money(target)}</span>
+                  </span>
+                </div>
+
+                <div
+                  className="meter"
+                  role="img"
+                  aria-label={`${goal.name}: ${pct.toFixed(0)}% concluída`}
+                >
+                  <div
+                    style={{
+                      width: `${pct}%`,
+                      height: '100%',
+                      borderRadius: '0 4px 4px 0',
+                      background: done ? 'var(--good)' : 'var(--brand)',
+                      transition: 'width .5s cubic-bezier(.2,.7,.2,1)'
+                    }}
+                  />
+                </div>
+
+                <div className="page-head" style={{ gap: 8 }}>
+                  <span className="row-sub">
+                    {done ? 'Meta batida 🎉' : `${pct.toFixed(0)}% — faltam ${money(remaining)}`}
+                  </span>
+
+                  <div className="form-actions">
+                    {contributing === goal.id ? (
+                      <form onSubmit={(e) => handleContribute(e, goal)} className="form-actions">
+                        <input
+                          className="input"
+                          type="number"
+                          step="0.01"
+                          min="0.01"
+                          inputMode="decimal"
+                          placeholder="Valor"
+                          value={contribution}
+                          onChange={(e) => setContribution(e.target.value)}
+                          style={{ width: 120 }}
+                          autoFocus
+                        />
+                        <button type="submit" className="btn btn-primary">Adicionar</button>
+                        <button type="button" className="btn" onClick={() => { setContributing(null); setContribution(''); }}>
+                          Cancelar
+                        </button>
+                      </form>
+                    ) : (
+                      <>
+                        {!done && (
+                          <button type="button" className="btn" onClick={() => { setContributing(goal.id); setContribution(''); }}>
+                            Contribuir
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          className="icon-btn-sm"
+                          onClick={() => handleArchive(goal)}
+                          title={`Arquivar ${goal.name}`}
+                          aria-label={`Arquivar ${goal.name}`}
+                        >
+                          ✕
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
   );
 }
