@@ -86,6 +86,8 @@ describe('Rotas de transações', () => {
     expect(res.body.totalIncome).toBe(3000);
     expect(res.body.totalExpense).toBe(75.5);
     expect(res.body.net).toBe(3000 - 75.5);
+    // count conta todos os tipos do mês: a despesa "Cinema" + esta receita
+    expect(res.body.count).toBe(2);
   });
 
   test('exige destinationAccountId para transferências', async () => {

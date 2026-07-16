@@ -13,7 +13,7 @@ const now = new Date();
 
 export default function Home() {
   const { user, privateMode } = useOutletContext();
-  const [summary, setSummary] = useState({ byCategory: [], totalIncome: 0, totalExpense: 0, net: 0 });
+  const [summary, setSummary] = useState({ byCategory: [], totalIncome: 0, totalExpense: 0, net: 0, count: 0 });
   const [recent, setRecent] = useState([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState({ month: now.getMonth() + 1, year: now.getFullYear() });
@@ -92,7 +92,7 @@ export default function Home() {
             <span className="kpi-dot" style={{ background: 'var(--brand)' }} aria-hidden="true" />
             <span className="label">Lançamentos</span>
           </div>
-          <div className="kpi-value">{recent.length > 0 ? recent.length : '—'}</div>
+          <div className="kpi-value">{summary.count > 0 ? summary.count : '—'}</div>
           <span className="kpi-sub">
             <Link to="/lancamentos" style={{ color: 'var(--brand-ink)' }}>
               ver todos

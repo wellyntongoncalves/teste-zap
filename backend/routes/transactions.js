@@ -190,12 +190,17 @@ router.get('/summary', async (req, res) => {
 
   const totalIncome = parseFloat(incomeRows[0]?.total) || 0;
 
+  // Contagem real do mês (todos os tipos). A Home mostrava o tamanho da lista de
+  // recentes (cortada em 6), então "50 lançamentos" aparecia como "6".
+  const count = await Transaction.count({ where: baseWhere });
+
   res.json({
     total: totalExpense,
     byCategory,
     totalIncome,
     totalExpense,
-    net: totalIncome - totalExpense
+    net: totalIncome - totalExpense,
+    count
   });
 });
 
