@@ -3,9 +3,10 @@ const twilio = require('twilio');
 const User = require('../models/user');
 const Account = require('../models/account');
 const Transaction = require('../models/transaction');
-const { parseMessage } = require('../services/nlp');
+const { parseMessage, isQuestion } = require('../services/nlp');
 const { sendWhatsAppMessage } = require('../services/whatsapp');
 const { appendTransactionNote } = require('../services/obsidian');
+const { ask, isConfigured: veroIsConfigured } = require('../services/assistant');
 
 const router = express.Router();
 
@@ -37,6 +38,29 @@ async function getDefaultAccount(user) {
   return Account.create({ userId: user.id, name: 'Conta Padrão', type: 'carteira', initialBalance: 0 });
 }
 
+// O Vero pode demorar alguns segundos; a Twilio reenvia o webhook se a resposta
+// não vier rápido, o que geraria respostas duplicadas. Por isso confirmamos o
+// recebimento na hora e mandamos a resposta pelo WhatsApp quando ela ficar pronta.
+async function answerQuestion(user, from, question, res) {
+  if (!veroIsConfigured()) {
+    await sendWhatsAppMessage(
+      from,
+      'Ainda não consigo responder perguntas — o assistente não está configurado. Por enquanto, mande seus gastos que eu registro.'
+    );
+    return res.sendStatus(200);
+  }
+
+  res.sendStatus(200);
+
+  try {
+    const { answer } = await ask(user, question);
+    await sendWhatsAppMessage(from, answer);
+  } catch (err) {
+    console.warn('Vero falhou no WhatsApp:', err.message);
+    await sendWhatsAppMessage(from, 'Não consegui responder agora. Tente de novo em instantes.');
+  }
+}
+
 // Webhook chamado pela Twilio a cada mensagem recebida no número do WhatsApp Business.
 // Configurar em https://console.twilio.com -> WhatsApp Sandbox/Sender -> "When a message comes in".
 router.post('/webhook', verifyTwilioSignature, async (req, res) => {
@@ -55,10 +79,19 @@ router.post('/webhook', verifyTwilioSignature, async (req, res) => {
     return res.sendStatus(200);
   }
 
+  // Pergunta vai pro Vero; o resto tenta virar lançamento. A ordem importa:
+  // "quanto gastei 2026" casa com o padrão de valor e viraria uma despesa.
+  if (isQuestion(body)) {
+    return answerQuestion(user, from, body, res);
+  }
+
   const parsed = parseMessage(body);
 
   if (!parsed.valid) {
-    await sendWhatsAppMessage(from, 'Não consegui identificar um valor na mensagem. Tente algo como "Gastei 50 reais no mercado".');
+    const dica = veroIsConfigured()
+      ? 'Não achei um valor aí. Pra lançar, mande algo como "Gastei 50 reais no mercado" — ou faça uma pergunta, tipo "quanto gastei esse mês?".'
+      : 'Não consegui identificar um valor na mensagem. Tente algo como "Gastei 50 reais no mercado".';
+    await sendWhatsAppMessage(from, dica);
     return res.sendStatus(200);
   }
 

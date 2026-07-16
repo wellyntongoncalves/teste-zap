@@ -49,6 +49,21 @@ function detectType(text) {
   return INCOME_KEYWORDS.some((keyword) => lower.includes(keyword)) ? 'income' : 'expense';
 }
 
+const QUESTION_STARTERS = [
+  'quanto', 'quantos', 'quanta', 'quantas', 'qual', 'quais', 'quando', 'onde',
+  'como', 'porque', 'por que', 'pq', 'quem', 'me diz', 'me diga', 'sera que',
+  'será que', 'da pra', 'dá pra', 'posso', 'devo', 'tenho'
+];
+
+// Roteia entre "lançar transação" e "perguntar ao Vero". Precisa rodar ANTES do
+// parseAmount: "quanto gastei 2026" casa com o padrão de valor e viraria uma
+// despesa de R$ 2.026 em vez de uma pergunta.
+function isQuestion(text) {
+  const lower = text.trim().toLowerCase();
+  if (lower.endsWith('?')) return true;
+  return QUESTION_STARTERS.some((starter) => lower.startsWith(`${starter} `));
+}
+
 function parseMessage(text) {
   const amount = parseAmount(text);
   const type = detectType(text);
@@ -67,4 +82,4 @@ function parseMessage(text) {
   };
 }
 
-module.exports = { parseMessage, parseAmount, detectCategory, detectType, CATEGORY_KEYWORDS };
+module.exports = { parseMessage, parseAmount, detectCategory, detectType, isQuestion, CATEGORY_KEYWORDS };
