@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import api from '../../api';
 import { formatMoney } from '../../format';
 import Invoices from './Invoices';
@@ -12,15 +12,16 @@ export default function CreditCards({ privateMode }) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [expanded, setExpanded] = useState(null);
+  const [showArchived, setShowArchived] = useState(false);
+
+  const loadCards = useCallback(async () => {
+    const { data } = await api.get('/credit-cards', { params: { includeArchived: showArchived } });
+    setCards(data);
+  }, [showArchived]);
 
   useEffect(() => {
     loadCards();
-  }, []);
-
-  async function loadCards() {
-    const { data } = await api.get('/credit-cards');
-    setCards(data);
-  }
+  }, [loadCards]);
 
   function set(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -49,8 +50,13 @@ export default function CreditCards({ privateMode }) {
   }
 
   async function handleArchive(card) {
-    if (!window.confirm(`Arquivar o cartão "${card.name}"? Os lançamentos dele continuam no histórico.`)) return;
+    if (!window.confirm(`Arquivar o cartão "${card.name}"? Ele sai da lista, mas as faturas ficam e você pode restaurá-lo depois.`)) return;
     await api.delete(`/credit-cards/${card.id}`);
+    loadCards();
+  }
+
+  async function handleRestore(card) {
+    await api.patch(`/credit-cards/${card.id}`, { archived: false });
     loadCards();
   }
 
@@ -60,11 +66,21 @@ export default function CreditCards({ privateMode }) {
     <section className="card">
       <div className="card-head">
         <h2 className="h2">Cartões de crédito</h2>
-        {!open && (
-          <button type="button" className="btn" onClick={() => setOpen(true)}>
-            <span aria-hidden="true">+</span> Novo cartão
+        <div className="form-actions">
+          <button
+            type="button"
+            className="chip"
+            aria-pressed={showArchived}
+            onClick={() => setShowArchived((v) => !v)}
+          >
+            Arquivados
           </button>
-        )}
+          {!open && (
+            <button type="button" className="btn" onClick={() => setOpen(true)}>
+              <span aria-hidden="true">+</span> Novo cartão
+            </button>
+          )}
+        </div>
       </div>
 
       {open && (
@@ -113,9 +129,10 @@ export default function CreditCards({ privateMode }) {
         <div className="rows">
           {cards.map((card) => {
             const isOpen = expanded === card.id;
+            const archived = Boolean(card.archivedAt);
 
             return (
-              <div key={card.id} style={{ borderBottom: '1px solid var(--line)' }}>
+              <div key={card.id} style={{ borderBottom: '1px solid var(--line)', opacity: archived ? 0.6 : 1 }}>
                 <div className="row" style={{ border: 0 }}>
                   <button
                     type="button"
@@ -126,19 +143,29 @@ export default function CreditCards({ privateMode }) {
                   >
                     <span className="row-title">
                       {card.name} <span className="muted" aria-hidden="true" style={{ fontSize: 12 }}>{isOpen ? '▾' : '▸'}</span>
+                      {/* arquivado carrega rótulo, não só a opacidade */}
+                      {archived && (
+                        <span className="pill pill-transfer" style={{ marginLeft: 8 }}>Arquivado</span>
+                      )}
                     </span>
                     <span className="row-sub">Fecha dia {card.closingDay} · vence dia {card.dueDay} · ver faturas</span>
                   </button>
                   <span className="row-value">{money(card.limitAmount)}</span>
-                  <button
-                    type="button"
-                    className="icon-btn-sm"
-                    onClick={() => handleArchive(card)}
-                    title={`Arquivar ${card.name}`}
-                    aria-label={`Arquivar ${card.name}`}
-                  >
-                    ✕
-                  </button>
+                  {archived ? (
+                    <button type="button" className="btn" onClick={() => handleRestore(card)} style={{ padding: '5px 10px', fontSize: 12 }}>
+                      Restaurar
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="icon-btn-sm"
+                      onClick={() => handleArchive(card)}
+                      title={`Arquivar ${card.name}`}
+                      aria-label={`Arquivar ${card.name}`}
+                    >
+                      ✕
+                    </button>
+                  )}
                 </div>
 
                 {isOpen && <Invoices card={card} privateMode={privateMode} />}

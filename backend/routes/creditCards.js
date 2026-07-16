@@ -63,13 +63,17 @@ router.patch('/:id', async (req, res) => {
     return res.status(404).json({ error: 'Cartão não encontrado' });
   }
 
-  const { name, limitAmount, closingDay, dueDay, paymentAccountId } = req.body;
+  const { name, limitAmount, closingDay, dueDay, paymentAccountId, archived } = req.body;
+
   await card.update({
     ...(name !== undefined ? { name } : {}),
     ...(limitAmount !== undefined ? { limitAmount } : {}),
     ...(closingDay !== undefined ? { closingDay } : {}),
     ...(dueDay !== undefined ? { dueDay } : {}),
-    ...(paymentAccountId !== undefined ? { paymentAccountId } : {})
+    ...(paymentAccountId !== undefined ? { paymentAccountId } : {}),
+    // Mesma correção das contas: sem isto, arquivar o cartão era irreversível e
+    // as faturas dele ficavam inalcançáveis.
+    ...(archived !== undefined ? { archivedAt: archived ? new Date() : null } : {})
   });
 
   res.json(card);

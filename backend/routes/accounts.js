@@ -44,11 +44,16 @@ router.patch('/:id', async (req, res) => {
     return res.status(404).json({ error: 'Conta não encontrada' });
   }
 
-  const { name, type, initialBalance } = req.body;
+  const { name, type, initialBalance, archived } = req.body;
+
   await account.update({
     ...(name !== undefined ? { name } : {}),
     ...(type !== undefined ? { type } : {}),
-    ...(initialBalance !== undefined ? { initialBalance } : {})
+    ...(initialBalance !== undefined ? { initialBalance } : {}),
+    // Sem isto arquivar era porta de mão única: o DELETE marcava archivedAt e
+    // nada nunca limpava, então a conta sumia da interface para sempre — com o
+    // histórico dela junto.
+    ...(archived !== undefined ? { archivedAt: archived ? new Date() : null } : {})
   });
 
   res.json({ ...account.toJSON(), balance: await computeBalance(account) });

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import api from '../../api';
 import { formatMoney } from '../../format';
 
@@ -18,15 +18,16 @@ export default function Accounts({ privateMode }) {
   const [error, setError] = useState('');
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
+
+  const loadAccounts = useCallback(async () => {
+    const { data } = await api.get('/accounts', { params: { includeArchived: showArchived } });
+    setAccounts(data);
+  }, [showArchived]);
 
   useEffect(() => {
     loadAccounts();
-  }, []);
-
-  async function loadAccounts() {
-    const { data } = await api.get('/accounts');
-    setAccounts(data);
-  }
+  }, [loadAccounts]);
 
   function set(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -54,23 +55,41 @@ export default function Accounts({ privateMode }) {
   }
 
   async function handleArchive(account) {
-    if (!window.confirm(`Arquivar a conta "${account.name}"? Os lançamentos dela continuam no histórico.`)) return;
+    if (!window.confirm(`Arquivar a conta "${account.name}"? Ela sai da lista, mas os lançamentos ficam e você pode restaurá-la depois.`)) return;
     await api.delete(`/accounts/${account.id}`);
     loadAccounts();
   }
 
+  async function handleRestore(account) {
+    await api.patch(`/accounts/${account.id}`, { archived: false });
+    loadAccounts();
+  }
+
   const money = (value) => (privateMode ? '••••' : formatMoney(value));
-  const total = accounts.reduce((sum, a) => sum + (Number(a.balance) || 0), 0);
+  // Conta arquivada não entra no total — ela não faz parte do seu dinheiro hoje.
+  const total = accounts
+    .filter((a) => !a.archivedAt)
+    .reduce((sum, a) => sum + (Number(a.balance) || 0), 0);
 
   return (
     <section className="card">
       <div className="card-head">
         <h2 className="h2">Contas</h2>
-        {!open && (
-          <button type="button" className="btn" onClick={() => setOpen(true)}>
-            <span aria-hidden="true">+</span> Nova conta
+        <div className="form-actions">
+          <button
+            type="button"
+            className="chip"
+            aria-pressed={showArchived}
+            onClick={() => setShowArchived((v) => !v)}
+          >
+            Arquivadas
           </button>
-        )}
+          {!open && (
+            <button type="button" className="btn" onClick={() => setOpen(true)}>
+              <span aria-hidden="true">+</span> Nova conta
+            </button>
+          )}
+        </div>
       </div>
 
       {open && (
@@ -118,29 +137,47 @@ export default function Accounts({ privateMode }) {
       ) : (
         <>
           <div className="rows">
-            {accounts.map((account) => (
-              <div className="row" key={account.id}>
-                <div className="row-main">
-                  <span className="row-title">{account.name}</span>
-                  <span className="row-sub">{TYPE_LABELS[account.type] || account.type}</span>
+            {accounts.map((account) => {
+              const archived = Boolean(account.archivedAt);
+
+              return (
+                <div className="row" key={account.id} style={{ opacity: archived ? 0.6 : 1 }}>
+                  <div className="row-main">
+                    <span className="row-title">
+                      {account.name}
+                      {/* arquivada carrega rótulo, não só a opacidade */}
+                      {archived && (
+                        <span className="pill pill-transfer" style={{ marginLeft: 8 }}>
+                          Arquivada
+                        </span>
+                      )}
+                    </span>
+                    <span className="row-sub">{TYPE_LABELS[account.type] || account.type}</span>
+                  </div>
+                  <span
+                    className="row-value"
+                    style={{ color: Number(account.balance) < 0 ? 'var(--critical-ink)' : 'var(--ink)' }}
+                  >
+                    {money(account.balance)}
+                  </span>
+                  {archived ? (
+                    <button type="button" className="btn" onClick={() => handleRestore(account)} style={{ padding: '5px 10px', fontSize: 12 }}>
+                      Restaurar
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="icon-btn-sm"
+                      onClick={() => handleArchive(account)}
+                      title={`Arquivar ${account.name}`}
+                      aria-label={`Arquivar ${account.name}`}
+                    >
+                      ✕
+                    </button>
+                  )}
                 </div>
-                <span
-                  className="row-value"
-                  style={{ color: Number(account.balance) < 0 ? 'var(--critical-ink)' : 'var(--ink)' }}
-                >
-                  {money(account.balance)}
-                </span>
-                <button
-                  type="button"
-                  className="icon-btn-sm"
-                  onClick={() => handleArchive(account)}
-                  title={`Arquivar ${account.name}`}
-                  aria-label={`Arquivar ${account.name}`}
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="card-body" style={{ borderTop: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between' }}>
