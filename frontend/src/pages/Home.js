@@ -1,36 +1,41 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useOutletContext, Link } from 'react-router-dom';
 import api from '../api';
 import TransactionChart from '../components/transactions/TransactionChart';
 import TransactionList from '../components/transactions/TransactionList';
 import VeroChat from '../components/assistant/VeroChat';
 import Insights from '../components/insights/Insights';
+import MonthNav from '../components/layout/MonthNav';
 import { formatMoney } from '../format';
 
 const MONTH_LABEL = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' });
+const now = new Date();
 
 export default function Home() {
   const { user, privateMode } = useOutletContext();
   const [summary, setSummary] = useState({ byCategory: [], totalIncome: 0, totalExpense: 0, net: 0 });
   const [recent, setRecent] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [period, setPeriod] = useState({ month: now.getMonth() + 1, year: now.getFullYear() });
 
-  // Estável entre renders: senão o efeito refaria a busca a cada render.
-  const today = useMemo(() => new Date(), []);
-
-  useEffect(() => {
-    const params = { month: today.getMonth() + 1, year: today.getFullYear() };
-
-    Promise.all([
-      api.get('/transactions/summary', { params }),
-      api.get('/transactions', { params })
+  const load = useCallback(() => {
+    setLoading(true);
+    return Promise.all([
+      api.get('/transactions/summary', { params: period }),
+      api.get('/transactions', { params: period })
     ])
       .then(([summaryRes, listRes]) => {
         setSummary(summaryRes.data);
         setRecent(listRes.data.slice(0, 6));
       })
       .finally(() => setLoading(false));
-  }, [today]);
+  }, [period]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const monthDate = new Date(period.year, period.month - 1, 1);
 
   const money = (value) => (privateMode ? '••••••' : formatMoney(value));
   const net = Number(summary.net) || 0;
@@ -38,10 +43,15 @@ export default function Home() {
 
   return (
     <div className={loading ? 'is-loading' : ''} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div className="page-head">
+        <h1 className="h1">Início</h1>
+        <MonthNav month={period.month} year={period.year} onChange={setPeriod} />
+      </div>
+
       {/* Hero: o número que o painel lidera. Sans, figuras proporcionais. */}
       <section className="card" aria-label="Saldo do mês">
         <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <span className="label">Saldo de {MONTH_LABEL.format(today)}</span>
+          <span className="label">Saldo de {MONTH_LABEL.format(monthDate)}</span>
           <div
             className="hero-value"
             style={{ color: positive ? 'var(--good-ink)' : 'var(--critical-ink)' }}

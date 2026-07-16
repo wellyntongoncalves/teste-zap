@@ -386,6 +386,28 @@ td.num, th.num { text-align: right; white-space: nowrap; }
 }
 .icon-btn-sm:hover { color: var(--critical-ink); background: var(--surface-2); border-color: var(--line); }
 
+/* ---------- navegação de mês ---------- */
+.month-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  padding: 3px 4px;
+}
+.month-nav-label {
+  font-size: 13.5px;
+  font-weight: 600;
+  min-width: 130px;
+  text-align: center;
+  text-transform: capitalize;
+}
+.month-nav .icon-btn { width: 28px; height: 28px; font-size: 17px; }
+.month-nav .icon-btn:disabled { opacity: 0.35; cursor: default; }
+.month-nav .icon-btn:disabled:hover { background: transparent; border-color: transparent; }
+.month-nav .btn { padding: 5px 10px; font-size: 12px; margin-left: 2px; }
+
 /* ---------- chat do Vero ---------- */
 .chat {
   display: flex;

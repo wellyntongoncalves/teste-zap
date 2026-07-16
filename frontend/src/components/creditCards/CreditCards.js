@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../api';
 import { formatMoney } from '../../format';
+import Invoices from './Invoices';
 
 const EMPTY_FORM = { name: '', limitAmount: '', closingDay: '', dueDay: '' };
 
@@ -10,6 +11,7 @@ export default function CreditCards({ privateMode }) {
   const [error, setError] = useState('');
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [expanded, setExpanded] = useState(null);
 
   useEffect(() => {
     loadCards();
@@ -109,24 +111,40 @@ export default function CreditCards({ privateMode }) {
         </div>
       ) : (
         <div className="rows">
-          {cards.map((card) => (
-            <div className="row" key={card.id}>
-              <div className="row-main">
-                <span className="row-title">{card.name}</span>
-                <span className="row-sub">Fecha dia {card.closingDay} · vence dia {card.dueDay}</span>
+          {cards.map((card) => {
+            const isOpen = expanded === card.id;
+
+            return (
+              <div key={card.id} style={{ borderBottom: '1px solid var(--line)' }}>
+                <div className="row" style={{ border: 0 }}>
+                  <button
+                    type="button"
+                    className="row-main"
+                    onClick={() => setExpanded(isOpen ? null : card.id)}
+                    aria-expanded={isOpen}
+                    style={{ border: 0, background: 'none', cursor: 'pointer', textAlign: 'left', font: 'inherit', flex: 1, padding: 0 }}
+                  >
+                    <span className="row-title">
+                      {card.name} <span className="muted" aria-hidden="true" style={{ fontSize: 12 }}>{isOpen ? '▾' : '▸'}</span>
+                    </span>
+                    <span className="row-sub">Fecha dia {card.closingDay} · vence dia {card.dueDay} · ver faturas</span>
+                  </button>
+                  <span className="row-value">{money(card.limitAmount)}</span>
+                  <button
+                    type="button"
+                    className="icon-btn-sm"
+                    onClick={() => handleArchive(card)}
+                    title={`Arquivar ${card.name}`}
+                    aria-label={`Arquivar ${card.name}`}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {isOpen && <Invoices card={card} privateMode={privateMode} />}
               </div>
-              <span className="row-value">{money(card.limitAmount)}</span>
-              <button
-                type="button"
-                className="icon-btn-sm"
-                onClick={() => handleArchive(card)}
-                title={`Arquivar ${card.name}`}
-                aria-label={`Arquivar ${card.name}`}
-              >
-                ✕
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </section>

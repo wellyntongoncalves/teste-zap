@@ -96,6 +96,70 @@ router.post('/', async (req, res) => {
   res.status(201).json(installmentTotal ? createdTransactions : createdTransactions[0]);
 });
 
+router.patch('/:id', async (req, res) => {
+  const transaction = await Transaction.findOne({ where: { id: req.params.id, userId: req.user.id } });
+
+  if (!transaction) {
+    return res.status(404).json({ error: 'Transação não encontrada' });
+  }
+
+  const { amount, category, description, occurredAt, type, accountId, destinationAccountId, tags } = req.body;
+
+  if (type === 'transfer' && !(destinationAccountId || transaction.destinationAccountId)) {
+    return res.status(400).json({ error: 'destinationAccountId é obrigatório para transferências' });
+  }
+
+  // Mesma proteção do POST: category é um ENUM no banco, e um valor fora da
+  // lista derrubaria a query em vez de virar um 400.
+  const safeCategory =
+    category !== undefined
+      ? (Transaction.CATEGORIES.includes(category) ? category : 'Outros')
+      : undefined;
+
+  await transaction.update({
+    ...(amount !== undefined ? { amount } : {}),
+    ...(safeCategory !== undefined ? { category: safeCategory } : {}),
+    ...(description !== undefined ? { description } : {}),
+    ...(occurredAt !== undefined ? { occurredAt } : {}),
+    ...(type !== undefined ? { type } : {}),
+    ...(accountId !== undefined ? { accountId } : {}),
+    // Só transferência tem destino; trocar o tipo pra outra coisa precisa limpá-lo.
+    ...(type !== undefined && type !== 'transfer' ? { destinationAccountId: null } : {}),
+    ...(destinationAccountId !== undefined ? { destinationAccountId } : {})
+  });
+
+  if (Array.isArray(tags)) {
+    await transaction.setTags(tags);
+  }
+
+  const updated = await Transaction.findOne({
+    where: { id: transaction.id },
+    include: [{ model: Tag, attributes: ['id', 'name', 'color'], through: { attributes: [] } }]
+  });
+
+  res.json(updated);
+});
+
+router.delete('/:id', async (req, res) => {
+  const transaction = await Transaction.findOne({ where: { id: req.params.id, userId: req.user.id } });
+
+  if (!transaction) {
+    return res.status(404).json({ error: 'Transação não encontrada' });
+  }
+
+  // Apagar uma parcela solta de uma compra parcelada deixa o restante órfão e
+  // o total não bate mais. Por isso "?scope=group" apaga a compra inteira.
+  if (req.query.scope === 'group' && transaction.installmentGroupId) {
+    const removed = await Transaction.destroy({
+      where: { userId: req.user.id, installmentGroupId: transaction.installmentGroupId }
+    });
+    return res.json({ removed });
+  }
+
+  await transaction.destroy();
+  res.json({ removed: 1 });
+});
+
 router.get('/summary', async (req, res) => {
   const { month, year } = req.query;
   const { start, end } = monthRange(month, year);
