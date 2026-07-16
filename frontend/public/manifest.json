@@ -1,22 +1,33 @@
 {
   "short_name": "MeuBolso",
   "name": "MeuBolso",
-  "description": "Controle de gastos pessoais integrado ao WhatsApp",
+  "description": "Suas finanças, do WhatsApp ao Obsidian",
   "icons": [
     {
       "src": "icon-192.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any"
     },
     {
       "src": "icon-512.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
     }
   ],
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "theme_color": "#2f5c8a",
-  "background_color": "#f5f5f5"
+  "orientation": "portrait",
+  "theme_color": "#00966b",
+  "background_color": "#f4f7f5",
+  "lang": "pt-BR",
+  "categories": ["finance", "productivity"]
 }

@@ -1,5 +1,15 @@
-const CACHE_NAME = 'meubolso-v1';
-const APP_SHELL = ['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png'];
+// Subir a versão a cada mudança no app shell (ícones, manifest): o activate
+// apaga os caches de nome diferente, então é isso que faz quem já instalou
+// receber os arquivos novos em vez de continuar com os antigos.
+const CACHE_NAME = 'meubolso-v2';
+const APP_SHELL = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/apple-touch-icon.png'
+];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

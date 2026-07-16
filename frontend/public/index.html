@@ -3,20 +3,28 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#2f5c8a" />
+
+    <!-- Pinta a barra do sistema com a cor do app. Uma cor só ficaria errada em
+         um dos temas, então cada um tem a sua (--page do theme.css). -->
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f4f7f5" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e1211" />
 
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     <link rel="icon" href="%PUBLIC_URL%/icon-192.png" />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/apple-touch-icon.png" />
 
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Finanças" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <!-- Este é o nome que aparece embaixo do ícone no iPhone. -->
+    <meta name="apple-mobile-web-app-title" content="MeuBolso" />
     <meta name="mobile-web-app-capable" content="yes" />
+
+    <meta name="description" content="Suas finanças, do WhatsApp ao Obsidian" />
 
     <title>MeuBolso</title>
   </head>
   <body>
+    <noscript>O MeuBolso precisa de JavaScript para funcionar.</noscript>
     <div id="root"></div>
   </body>
 </html>
