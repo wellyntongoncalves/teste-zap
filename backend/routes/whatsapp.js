@@ -3,7 +3,8 @@ const twilio = require('twilio');
 const User = require('../models/user');
 const Account = require('../models/account');
 const Transaction = require('../models/transaction');
-const { parseMessage, isQuestion } = require('../services/nlp');
+const { isQuestion } = require('../services/nlp');
+const { parseMessageSmart } = require('../services/nlpSmart');
 const { sendWhatsAppMessage } = require('../services/whatsapp');
 const { appendTransactionNote } = require('../services/obsidian');
 const { ask, isConfigured: veroIsConfigured } = require('../services/assistant');
@@ -85,7 +86,8 @@ router.post('/webhook', verifyTwilioSignature, async (req, res) => {
     return answerQuestion(user, from, body, res);
   }
 
-  const parsed = parseMessage(body);
+  // Tenta o regex e, se ele não entender, o LLM. Ver services/nlpSmart.js.
+  const parsed = await parseMessageSmart(body);
 
   if (!parsed.valid) {
     const dica = veroIsConfigured()

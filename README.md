@@ -271,11 +271,21 @@ esse caso — não inverta a ordem.
 A Twilio reenvia o webhook se a resposta demorar, então respondemos `200` na
 hora e mandamos a resposta do Vero quando fica pronta.
 
+## Como uma mensagem vira lançamento
+
+`services/nlpSmart.js` tenta o regex primeiro e só chama o LLM quando ele
+desiste. O regex acerta o caso comum ("Gastei 50 reais no mercado"), é
+instantâneo e não custa nada — não faz sentido pagar uma chamada por ele. O LLM
+entra para o que palavra-chave não pega ("almocei com a galera, saiu 80 pila")
+e usa `claude-haiku-4-5` com saída estruturada, porque parsear texto livre e
+torcer seria pior.
+
+Se o LLM falhar ou não houver chave, vale o veredito do regex: uma indisponi-
+bilidade da API não pode impedir alguém de registrar um gasto.
+
 ## Próximos passos sugeridos
 
 - Resumo diário pelo WhatsApp (depende do Twilio configurado).
-- Trocar o parser por regex por um LLM (mesma chave do Vero) para lidar com
-  frases mais variadas e ambíguas.
 - Áudio no WhatsApp (depende de uma API de transcrição).
 
 Fora de alcance: **Open Finance** (puxar do banco automaticamente) exige
