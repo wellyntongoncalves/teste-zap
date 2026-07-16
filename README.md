@@ -206,6 +206,8 @@ da rede); apenas o HTML/JS/CSS/ícones do app shell são cacheados.
 | POST   | `/api/accounts`                          | Cria conta                                      |
 | GET    | `/api/transactions?month=&year=&type=`   | Lista transações do usuário autenticado         |
 | POST   | `/api/transactions`                      | Cria transação (aceita `tags[]`, `installments`)|
+| PATCH  | `/api/transactions/:id`                  | Corrige uma transação                           |
+| DELETE | `/api/transactions/:id?scope=group`      | Apaga (com `scope=group`, a compra parcelada inteira) |
 | GET    | `/api/transactions/summary`              | Totais de receita/despesa/saldo no período      |
 | GET    | `/api/transactions/export/csv\|pdf`      | Exporta transações do período                   |
 | GET    | `/api/tags`                              | Lista/cria tags                                 |
