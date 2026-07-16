@@ -20,6 +20,7 @@ export default function Transactions() {
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState('');
+  const [exportError, setExportError] = useState('');
   const [period, setPeriod] = useState({ month: now.getMonth() + 1, year: now.getFullYear() });
   const [type, setType] = useState('');
   const [accountId, setAccountId] = useState('');
@@ -44,11 +45,16 @@ export default function Transactions() {
 
   async function handleExport(format) {
     setExporting(format);
+    setExportError('');
     try {
       await downloadFile(
         `/transactions/export/${format}?month=${period.month}&year=${period.year}`,
         `transacoes-${period.year}-${String(period.month).padStart(2, '0')}.${format}`
       );
+    } catch {
+      // Sem isso, uma falha de rede/servidor virava rejeição silenciosa: o botão
+      // voltava ao normal e o usuário ficava sem o arquivo e sem explicação.
+      setExportError(`Não consegui gerar o ${format.toUpperCase()}. Tente de novo.`);
     } finally {
       setExporting('');
     }
@@ -72,6 +78,13 @@ export default function Transactions() {
           </button>
         </div>
       </div>
+
+      {exportError && (
+        <div className="alert alert-error" role="alert">
+          <span aria-hidden="true">⚠</span>
+          <span>{exportError}</span>
+        </div>
+      )}
 
       {/* Um filtro só, acima de tudo que ele afeta — não um por card. */}
       <div className="page-head">
