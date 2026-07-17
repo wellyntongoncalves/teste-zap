@@ -49,7 +49,7 @@ export default function Home() {
       </div>
 
       {/* Hero: o número que o painel lidera. Sans, figuras proporcionais. */}
-      <section className="card" aria-label="Saldo do mês">
+      <section className="card hero-card" aria-label="Saldo do mês">
         <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <span className="label">Saldo de {MONTH_LABEL.format(monthDate)}</span>
           <div

@@ -38,7 +38,9 @@
   --r-sm: 6px;
   --r: 10px;
   --r-lg: 14px;
-  --shadow: 0 1px 2px rgba(14, 18, 17, 0.05), 0 1px 3px rgba(14, 18, 17, 0.04);
+  --shadow: 0 1px 2px rgba(14, 18, 17, 0.04), 0 2px 6px rgba(14, 18, 17, 0.06);
+  --shadow-lg: 0 10px 30px -8px rgba(14, 18, 17, 0.14), 0 3px 8px rgba(14, 18, 17, 0.06);
+  --ring: 0 0 0 3px var(--brand-wash);
 
   /* tipo — system sans em tudo, inclusive nos números grandes */
   --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -66,7 +68,8 @@
     --grid: #242a27;
 
     --on-brand: #06120e;
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 12px 34px -8px rgba(0, 0, 0, 0.55), 0 3px 8px rgba(0, 0, 0, 0.4);
   }
 }
 
@@ -91,7 +94,8 @@
   --grid: #242a27;
 
   --on-brand: #06120e;
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 12px 34px -8px rgba(0, 0, 0, 0.55), 0 3px 8px rgba(0, 0, 0, 0.4);
 }
 
 * { box-sizing: border-box; }
@@ -499,12 +503,18 @@ td.num, th.num { text-align: right; white-space: nowrap; }
   transition: background 0.15s, border-color 0.15s;
 }
 .btn:hover { background: var(--surface-2); border-color: var(--muted); }
+.btn:active { transform: translateY(0.5px); }
 .btn-primary {
   background: var(--brand);
   border-color: var(--brand);
   color: var(--on-brand);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1), 0 3px 10px -3px color-mix(in srgb, var(--brand) 50%, transparent);
 }
-.btn-primary:hover { filter: brightness(1.06); background: var(--brand); }
+.btn-primary:hover {
+  filter: brightness(1.06);
+  background: var(--brand);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12), 0 5px 14px -3px color-mix(in srgb, var(--brand) 60%, transparent);
+}
 
 .toggle {
   display: inline-flex;
@@ -631,6 +641,26 @@ td.num, th.num { text-align: right; white-space: nowrap; }
 
 /* Refetch segura o render anterior em opacidade reduzida — sem pulo de layout */
 .is-loading { opacity: 0.55; transition: opacity 0.2s; }
+
+/* ---------- polimento: profundidade + entrada ---------- */
+/* Card de saldo (hero): leve halo da marca no canto + elevação maior. Dá o tom
+   "produto", não "planilha", logo no primeiro bloco da tela. */
+.hero-card {
+  background:
+    radial-gradient(130% 150% at 100% 0%, var(--brand-wash) 0%, transparent 52%),
+    var(--surface);
+  box-shadow: var(--shadow-lg);
+  border-color: color-mix(in srgb, var(--brand) 20%, var(--line));
+}
+
+/* Conteúdo da página sobe suavemente ao entrar — sutil, uma vez por navegação. */
+@keyframes mb-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+/* backwards (não forwards/both): a animação NÃO trava o estado final, senão o
+   opacity:1 do fill anularia o .is-loading (dim do refetch na Home). */
+.main > * { animation: mb-rise 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
 
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
