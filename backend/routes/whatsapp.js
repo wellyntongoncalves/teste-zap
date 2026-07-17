@@ -3,7 +3,7 @@ const twilio = require('twilio');
 const User = require('../models/user');
 const Account = require('../models/account');
 const Transaction = require('../models/transaction');
-const { isQuestion } = require('../services/nlp');
+const { isQuestion, isGreeting } = require('../services/nlp');
 const { parseMessageSmart } = require('../services/nlpSmart');
 const { sendWhatsAppMessage } = require('../services/whatsapp');
 const { appendTransactionNote } = require('../services/obsidian');
@@ -38,6 +38,25 @@ async function getDefaultAccount(user) {
   if (existing) return existing;
 
   return Account.create({ userId: user.id, name: 'Conta Padrão', type: 'carteira', initialBalance: 0 });
+}
+
+// Boas-vindas/ajuda: primeiro contato acolhedor e auto-explicativo, em vez do
+// hint genérico de "não entendi". A lista de exemplos ensina o formato.
+function welcomeMessage(user, veroOn) {
+  const nome = (user.name || '').trim().split(/\s+/)[0];
+  const linhas = [
+    `Oi${nome ? `, ${nome}` : ''}! 👋 Sou o assistente do MeuBolso.`,
+    '',
+    'Me manda seus gastos e receitas que eu registro na hora:',
+    '• gastei 50 no mercado',
+    '• paguei 120 de luz',
+    '• recebi 3000 de salário'
+  ];
+  if (veroOn) {
+    linhas.push('', 'Quer saber algo? Pergunte: "quanto gastei esse mês?"');
+  }
+  linhas.push('', 'Tudo aparece no seu painel: https://meubolso-xi.vercel.app');
+  return linhas.join('\n');
 }
 
 // O Vero pode demorar alguns segundos; a Twilio reenvia o webhook se a resposta
@@ -78,6 +97,12 @@ router.post('/webhook', verifyTwilioSignature, async (req, res) => {
 
   if (!user) {
     await sendWhatsAppMessage(from, 'Número não cadastrado. Cadastre-se no dashboard antes de registrar gastos.');
+    return res.sendStatus(200);
+  }
+
+  // Saudação/ajuda vem antes de tudo: "oi"/"ajuda" não é pergunta nem lançamento.
+  if (isGreeting(body)) {
+    await sendWhatsAppMessage(from, welcomeMessage(user, veroIsConfigured()));
     return res.sendStatus(200);
   }
 

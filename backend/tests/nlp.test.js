@@ -1,4 +1,4 @@
-const { parseMessage, parseAmount, detectCategory } = require('../services/nlp');
+const { parseMessage, parseAmount, detectCategory, isGreeting } = require('../services/nlp');
 
 describe('parseMessage', () => {
   test('extrai valor e categoria de "Gastei 50 reais no mercado"', () => {
@@ -52,5 +52,21 @@ describe('detectCategory', () => {
 
   test('reconhece Saúde por "farmácia"', () => {
     expect(detectCategory('comprei remédio na farmácia 22 reais')).toBe('Saúde');
+  });
+});
+
+describe('isGreeting', () => {
+  test.each(['oi', 'Olá', 'bom dia', 'ajuda', 'menu', 'help', 'oi tudo bem'])(
+    'reconhece saudação/ajuda: %s',
+    (msg) => expect(isGreeting(msg)).toBe(true)
+  );
+
+  test.each(['gastei 50 no mercado', 'recebi 3000 de salário', 'quanto gastei esse mês'])(
+    'não confunde lançamento/pergunta com saudação: %s',
+    (msg) => expect(isGreeting(msg)).toBe(false)
+  );
+
+  test('mensagem com valor não é saudação, mesmo contendo "ajuda"', () => {
+    expect(isGreeting('ajuda de custo recebi 200')).toBe(false);
   });
 });

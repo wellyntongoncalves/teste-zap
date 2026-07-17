@@ -64,6 +64,20 @@ function isQuestion(text) {
   return QUESTION_STARTERS.some((starter) => lower.startsWith(`${starter} `));
 }
 
+// Saudações e pedidos de ajuda ("oi", "ajuda", "menu") pra dar as boas-vindas em
+// vez do hint genérico de "não entendi". Guarda: se há um valor na mensagem, é
+// lançamento, não saudação (evita pegar "ajuda de custo recebi 200").
+const GREETINGS = ['oi', 'ola', 'eai', 'e ai', 'opa', 'bom dia', 'boa tarde', 'boa noite', 'hey', 'comecar', 'iniciar', 'inicio', 'start'];
+
+function isGreeting(text) {
+  if (parseAmount(text) !== null) return false;
+  const lower = text.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  if (/\b(ajuda|help|menu|comandos)\b/.test(lower)) return true;
+  const words = lower.split(/\s+/).filter(Boolean);
+  if (words.length > 4) return false;
+  return GREETINGS.some((g) => lower === g || lower.startsWith(`${g} `) || lower.startsWith(`${g}!`));
+}
+
 function parseMessage(text) {
   const amount = parseAmount(text);
   const type = detectType(text);
@@ -82,4 +96,4 @@ function parseMessage(text) {
   };
 }
 
-module.exports = { parseMessage, parseAmount, detectCategory, detectType, isQuestion, CATEGORY_KEYWORDS };
+module.exports = { parseMessage, parseAmount, detectCategory, detectType, isQuestion, isGreeting, CATEGORY_KEYWORDS };
