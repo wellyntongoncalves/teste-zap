@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { NavLink, Outlet, Link } from 'react-router-dom';
+import BrandMark from '../BrandMark';
 
 const NAV_ITEMS = [
   { to: '/', label: 'Início', end: true, icon: <path d="M3 10.5L12 3l9 7.5M5.5 9.5V20h13V9.5" /> },
@@ -72,7 +73,7 @@ export default function Layout({ user }) {
       <header className="appbar">
         <div className="appbar-inner">
           <div className="brand-mark">
-            <span className="brand-badge" aria-hidden="true">M</span>
+            <BrandMark />
             MeuBolso
           </div>
 

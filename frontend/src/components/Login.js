@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import api from '../api';
+import BrandMark from './BrandMark';
 
 export default function Login({ onLogin }) {
   const [email, setEmail] = useState('');
@@ -34,7 +35,7 @@ export default function Login({ onLogin }) {
     <div className="auth-shell">
       <div className="auth-card">
         <div className="auth-brand">
-          <span className="brand-badge" aria-hidden="true">M</span>
+          <BrandMark />
           MeuBolso
         </div>
 

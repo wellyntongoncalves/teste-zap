@@ -340,9 +340,13 @@ td.num, th.num { text-align: right; white-space: nowrap; }
   display: grid;
   place-items: center;
   padding: 20px;
-  background: var(--page);
+  /* halo suave da marca no topo — dá profundidade à primeira tela sem poluir */
+  background:
+    radial-gradient(90% 55% at 50% -8%, var(--brand-wash) 0%, transparent 62%),
+    var(--page);
 }
 .auth-card { width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 20px; }
+.auth-card .card { box-shadow: var(--shadow-lg); }
 .auth-brand { display: flex; align-items: center; gap: 10px; justify-content: center; font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
 .auth-brand .brand-badge { width: 32px; height: 32px; border-radius: 8px; font-size: 16px; }
 
@@ -573,6 +577,7 @@ td.num, th.num { text-align: right; white-space: nowrap; }
   font-weight: 800;
   flex: none;
 }
+.brand-badge svg { width: 62%; height: 62%; }
 .appbar-actions { display: flex; align-items: center; gap: 6px; }
 .icon-btn {
   width: 34px;
