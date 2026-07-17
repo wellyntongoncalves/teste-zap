@@ -25,7 +25,11 @@ export default function Insights({ privateMode }) {
       <div className="card-head">
         <h2 className="h2">Padrões e projeção</h2>
         <span className="muted" style={{ fontSize: 12.5 }}>
-          {projection.daysLeft > 0 ? `faltam ${projection.daysLeft} dias no mês` : 'último dia do mês'}
+          {projection.daysLeft > 1
+            ? `faltam ${projection.daysLeft} dias no mês`
+            : projection.daysLeft === 1
+            ? 'falta 1 dia no mês'
+            : 'último dia do mês'}
         </span>
       </div>
 
