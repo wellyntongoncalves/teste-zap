@@ -48,13 +48,24 @@ function useTheme() {
 export default function Layout({ user }) {
   const [theme, setTheme] = useTheme();
   const [privateMode, setPrivateMode] = useState(() => localStorage.getItem('mb_private') === '1');
+  // Reativo: com o tema em "system", o CSS acompanha o SO sozinho, mas o ícone
+  // ☀️/🌙 só atualizaria no próximo render. Assinamos a media query pra ele não mentir.
+  const [systemDark, setSystemDark] = useState(
+    () => window.matchMedia('(prefers-color-scheme: dark)').matches
+  );
 
   useEffect(() => {
     localStorage.setItem('mb_private', privateMode ? '1' : '0');
   }, [privateMode]);
 
-  const isDark =
-    theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = (e) => setSystemDark(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+
+  const isDark = theme === 'dark' || (theme === 'system' && systemDark);
 
   return (
     <div className="app">
@@ -71,17 +82,19 @@ export default function Layout({ user }) {
               className="icon-btn"
               onClick={() => setPrivateMode((v) => !v)}
               aria-pressed={privateMode}
+              aria-label={privateMode ? 'Mostrar valores' : 'Ocultar valores'}
               title={privateMode ? 'Mostrar valores' : 'Ocultar valores'}
             >
-              {privateMode ? '🙈' : '👁️'}
+              <span aria-hidden="true">{privateMode ? '🙈' : '👁️'}</span>
             </button>
             <button
               type="button"
               className="icon-btn"
               onClick={() => setTheme(isDark ? 'light' : 'dark')}
+              aria-label={isDark ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
               title={isDark ? 'Tema claro' : 'Tema escuro'}
             >
-              {isDark ? '☀️' : '🌙'}
+              <span aria-hidden="true">{isDark ? '☀️' : '🌙'}</span>
             </button>
             <Link to="/configuracoes" className="icon-btn" aria-label="Configurações">
               ⚙️
