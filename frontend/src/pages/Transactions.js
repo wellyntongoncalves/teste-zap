@@ -14,11 +14,40 @@ const TYPE_FILTERS = [
   { value: 'transfer', label: 'Transferências' }
 ];
 
+// Placeholder da lista enquanto a primeira carga não volta — evita o flash de
+// "nenhuma transação" e dá a forma do conteúdo real.
+function SkeletonList() {
+  const widths = [58, 84, 120, 72];
+  return (
+    <div className="table-wrap" aria-hidden="true">
+      <table className="data">
+        <tbody>
+          {Array.from({ length: 6 }).map((_, row) => (
+            <tr key={row}>
+              {widths.map((w, col) => (
+                <td key={col} className={col === widths.length - 1 ? 'num' : undefined}>
+                  <span
+                    className="skeleton skeleton-line"
+                    style={{ width: w, marginLeft: col === widths.length - 1 ? 'auto' : 0 }}
+                  />
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export default function Transactions() {
   const { privateMode } = useOutletContext();
   const [transactions, setTransactions] = useState([]);
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
+  // ready = primeira carga concluída; antes disso mostramos skeleton em vez de
+  // piscar "nenhuma transação" (que é falso enquanto os dados não chegaram).
+  const [ready, setReady] = useState(false);
   const [exporting, setExporting] = useState('');
   const [exportError, setExportError] = useState('');
   const [period, setPeriod] = useState({ month: now.getMonth() + 1, year: now.getFullYear() });
@@ -27,12 +56,18 @@ export default function Transactions() {
 
   const loadTransactions = useCallback(async () => {
     setLoading(true);
-    // A API já filtrava por type e accountId; só faltava a UI pedir.
-    const { data } = await api.get('/transactions', {
-      params: { ...period, ...(type ? { type } : {}), ...(accountId ? { accountId } : {}) }
-    });
-    setTransactions(data);
-    setLoading(false);
+    try {
+      // A API já filtrava por type e accountId; só faltava a UI pedir.
+      const { data } = await api.get('/transactions', {
+        params: { ...period, ...(type ? { type } : {}), ...(accountId ? { accountId } : {}) }
+      });
+      setTransactions(data);
+    } finally {
+      // finally: mesmo se a requisição falhar, saímos do skeleton (senão fica
+      // girando pra sempre) e paramos o loading.
+      setLoading(false);
+      setReady(true);
+    }
   }, [period, type, accountId]);
 
   useEffect(() => {
@@ -123,11 +158,15 @@ export default function Transactions() {
             </button>
           )}
         </div>
-        <TransactionList
-          transactions={transactions}
-          privateMode={privateMode}
-          onChanged={loadTransactions}
-        />
+        {ready ? (
+          <TransactionList
+            transactions={transactions}
+            privateMode={privateMode}
+            onChanged={loadTransactions}
+          />
+        ) : (
+          <SkeletonList />
+        )}
       </section>
     </div>
   );
