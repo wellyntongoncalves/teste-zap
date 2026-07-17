@@ -8,6 +8,7 @@ const { parseMessageSmart } = require('../services/nlpSmart');
 const { sendWhatsAppMessage } = require('../services/whatsapp');
 const { appendTransactionNote } = require('../services/obsidian');
 const { ask, isConfigured: veroIsConfigured } = require('../services/assistant');
+const { toOccurredAt } = require('../services/dates');
 
 const router = express.Router();
 
@@ -107,7 +108,10 @@ router.post('/webhook', verifyTwilioSignature, async (req, res) => {
     category: parsed.category,
     description: parsed.description,
     rawMessage: body,
-    source: 'whatsapp'
+    source: 'whatsapp',
+    // Data de hoje ancorada ao meio-dia UTC, mesmo invariante do dashboard —
+    // o default NOW gravava um instante real e sofria o mesmo off-by-one.
+    occurredAt: toOccurredAt()
   });
 
   await appendTransactionNote(user, transaction);

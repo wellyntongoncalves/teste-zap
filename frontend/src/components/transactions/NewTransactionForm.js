@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../api';
 import { CATEGORIES } from '../../constants';
+import { todayISO } from '../../format';
 
 const TYPES = [
   { value: 'expense', label: 'Despesa' },
@@ -15,7 +16,7 @@ const EMPTY_FORM = {
   description: '',
   accountId: '',
   destinationAccountId: '',
-  occurredAt: new Date().toISOString().slice(0, 10),
+  occurredAt: todayISO(),
   creditCardId: '',
   installments: '',
   tags: []
@@ -69,7 +70,7 @@ export default function NewTransactionForm({ onCreated }) {
         tags: form.tags
       });
 
-      setForm({ ...EMPTY_FORM, occurredAt: new Date().toISOString().slice(0, 10) });
+      setForm({ ...EMPTY_FORM, occurredAt: todayISO() });
       setOpen(false);
       onCreated();
     } catch (err) {

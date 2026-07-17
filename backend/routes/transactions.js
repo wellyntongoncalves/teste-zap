@@ -7,6 +7,7 @@ const Transaction = require('../models/transaction');
 const Tag = require('../models/tag');
 const authMiddleware = require('../middleware/auth');
 const { appendTransactionNote } = require('../services/obsidian');
+const { toOccurredAt } = require('../services/dates');
 
 const router = express.Router();
 router.use(authMiddleware);
@@ -72,7 +73,8 @@ router.post('/', async (req, res) => {
 
   const installmentTotal = creditCardId && installments > 1 ? installments : null;
   const installmentGroupId = installmentTotal ? crypto.randomUUID() : null;
-  const baseDate = occurredAt ? new Date(occurredAt) : new Date();
+  // Data de calendário ancorada ao meio-dia UTC (ver services/dates.js).
+  const baseDate = toOccurredAt(occurredAt);
   const installmentAmount = installmentTotal ? amount / installmentTotal : amount;
 
   const createdTransactions = [];
@@ -80,7 +82,9 @@ router.post('/', async (req, res) => {
 
   for (let i = 0; i < count; i += 1) {
     const installmentDate = new Date(baseDate);
-    installmentDate.setMonth(installmentDate.getMonth() + i);
+    // UTC pra não escorregar de dia: baseDate é meio-dia UTC, e somar mês em UTC
+    // mantém a âncora independentemente do fuso do servidor.
+    installmentDate.setUTCMonth(installmentDate.getUTCMonth() + i);
 
     const transaction = await Transaction.create({
       userId: req.user.id,
@@ -134,7 +138,7 @@ router.patch('/:id', async (req, res) => {
     ...(amount !== undefined ? { amount } : {}),
     ...(safeCategory !== undefined ? { category: safeCategory } : {}),
     ...(description !== undefined ? { description } : {}),
-    ...(occurredAt !== undefined ? { occurredAt } : {}),
+    ...(occurredAt !== undefined ? { occurredAt: toOccurredAt(occurredAt) } : {}),
     ...(type !== undefined ? { type } : {}),
     ...(accountId !== undefined ? { accountId } : {}),
     // Só transferência tem destino; trocar o tipo pra outra coisa precisa limpá-lo.
