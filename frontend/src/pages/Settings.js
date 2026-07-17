@@ -3,6 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import api from '../api';
 import Accounts from '../components/accounts/Accounts';
 import Tags from '../components/tags/Tags';
+import WhatsAppNumber from '../components/settings/WhatsAppNumber';
 
 export default function Settings({ onLogout }) {
   const { user, privateMode } = useOutletContext();
@@ -26,6 +27,7 @@ export default function Settings({ onLogout }) {
 
       <Accounts privateMode={privateMode} />
       <Tags />
+      <WhatsAppNumber />
 
       <section className="card">
         <div className="card-head">
