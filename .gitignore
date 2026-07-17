@@ -11,6 +11,9 @@ dist/
 # Saída da CLI do Vercel
 .vercel/
 
+# Binários de ferramentas locais (deno.exe, yt-dlp.exe) — não são do projeto
+.tools/
+
 # Vault do Obsidian: config e dados financeiros pessoais gerados localmente
 vault/.obsidian/
 vault/Gastos/
