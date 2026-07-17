@@ -61,8 +61,11 @@ export default function NewTransactionForm({ onCreated }) {
         accountId: form.accountId,
         destinationAccountId: form.type === 'transfer' ? form.destinationAccountId : undefined,
         occurredAt: form.occurredAt,
-        creditCardId: form.creditCardId || undefined,
-        installments: form.installments ? parseInt(form.installments, 10) : undefined,
+        // Cartão e parcelas só valem pra despesa. Sem isso, trocar o tipo depois de
+        // escolher um cartão vazava esses campos e criava, ex., uma receita parcelada.
+        creditCardId: form.type === 'expense' ? (form.creditCardId || undefined) : undefined,
+        installments:
+          form.type === 'expense' && form.installments ? parseInt(form.installments, 10) : undefined,
         tags: form.tags
       });
 
