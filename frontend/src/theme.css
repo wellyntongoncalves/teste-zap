@@ -647,6 +647,32 @@ td.num, th.num { text-align: right; white-space: nowrap; }
 /* Refetch segura o render anterior em opacidade reduzida — sem pulo de layout */
 .is-loading { opacity: 0.55; transition: opacity 0.2s; }
 
+/* ---------- skeleton (carregamento inicial) ---------- */
+/* Placeholder com brilho passando — some no primeiro dado. Melhor que piscar
+   zeros ou um branco: comunica "carregando" com a forma do conteúdo real. */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--grid);
+  border-radius: var(--r-sm);
+  display: inline-block;
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--surface) 65%, transparent),
+    transparent
+  );
+  animation: mb-shimmer 1.3s ease-in-out infinite;
+}
+@keyframes mb-shimmer { 100% { transform: translateX(100%); } }
+.skeleton-line { height: 0.85em; }
+
 /* ---------- polimento: profundidade + entrada ---------- */
 /* Card de saldo (hero): leve halo da marca no canto + elevação maior. Dá o tom
    "produto", não "planilha", logo no primeiro bloco da tela. */

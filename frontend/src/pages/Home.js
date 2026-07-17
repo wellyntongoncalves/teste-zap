@@ -16,6 +16,9 @@ export default function Home() {
   const [summary, setSummary] = useState({ byCategory: [], totalIncome: 0, totalExpense: 0, net: 0, count: 0 });
   const [recent, setRecent] = useState([]);
   const [loading, setLoading] = useState(true);
+  // ready = já teve uma primeira carga; antes disso mostramos skeleton em vez de
+  // piscar zeros. Depois, refetch de mês usa só o dim do .is-loading.
+  const [ready, setReady] = useState(false);
   const [period, setPeriod] = useState({ month: now.getMonth() + 1, year: now.getFullYear() });
 
   const load = useCallback(() => {
@@ -28,7 +31,10 @@ export default function Home() {
         setSummary(summaryRes.data);
         setRecent(listRes.data.slice(0, 6));
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+        setReady(true);
+      });
   }, [period]);
 
   useEffect(() => {
@@ -48,58 +54,82 @@ export default function Home() {
         <MonthNav month={period.month} year={period.year} onChange={setPeriod} />
       </div>
 
-      {/* Hero: o número que o painel lidera. Sans, figuras proporcionais. */}
-      <section className="card hero-card" aria-label="Saldo do mês">
-        <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <span className="label">Saldo de {MONTH_LABEL.format(monthDate)}</span>
-          <div
-            className="hero-value"
-            style={{ color: positive ? 'var(--good-ink)' : 'var(--critical-ink)' }}
-          >
-            {money(net)}
-          </div>
-          {/* polaridade nunca por cor sozinha: ícone + rótulo acompanham */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
-            <span aria-hidden="true">{positive ? '▲' : '▼'}</span>
-            <span className="muted">
-              {positive ? 'Você fechou o mês no positivo' : 'Suas despesas passaram das receitas'}
-            </span>
-          </div>
-        </div>
-      </section>
+      {!ready ? (
+        <>
+          {/* skeleton do hero + KPIs: some assim que o primeiro dado chega */}
+          <section className="card" aria-hidden="true">
+            <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <span className="skeleton skeleton-line" style={{ width: 130 }} />
+              <span className="skeleton" style={{ width: '58%', height: 46, borderRadius: 10 }} />
+              <span className="skeleton skeleton-line" style={{ width: 200 }} />
+            </div>
+          </section>
+          <section className="kpi-row" aria-hidden="true">
+            {[0, 1, 2].map((i) => (
+              <div className="kpi" key={i}>
+                <span className="skeleton skeleton-line" style={{ width: 72 }} />
+                <span className="skeleton" style={{ width: 116, height: 28, borderRadius: 8, margin: '2px 0' }} />
+                <span className="skeleton skeleton-line" style={{ width: 90 }} />
+              </div>
+            ))}
+          </section>
+        </>
+      ) : (
+        <>
+          {/* Hero: o número que o painel lidera. Sans, figuras proporcionais. */}
+          <section className="card hero-card" aria-label="Saldo do mês">
+            <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span className="label">Saldo de {MONTH_LABEL.format(monthDate)}</span>
+              <div
+                className="hero-value"
+                style={{ color: positive ? 'var(--good-ink)' : 'var(--critical-ink)' }}
+              >
+                {money(net)}
+              </div>
+              {/* polaridade nunca por cor sozinha: ícone + rótulo acompanham */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
+                <span aria-hidden="true">{positive ? '▲' : '▼'}</span>
+                <span className="muted">
+                  {positive ? 'Você fechou o mês no positivo' : 'Suas despesas passaram das receitas'}
+                </span>
+              </div>
+            </div>
+          </section>
 
-      <section className="kpi-row" aria-label="Resumo do mês">
-        <div className="kpi">
-          <div className="kpi-top">
-            <span className="kpi-dot" style={{ background: 'var(--good)' }} aria-hidden="true" />
-            <span className="label">Receitas</span>
-          </div>
-          <div className="kpi-value">{money(summary.totalIncome)}</div>
-          <span className="kpi-sub">entradas no mês</span>
-        </div>
+          <section className="kpi-row" aria-label="Resumo do mês">
+            <div className="kpi">
+              <div className="kpi-top">
+                <span className="kpi-dot" style={{ background: 'var(--good)' }} aria-hidden="true" />
+                <span className="label">Receitas</span>
+              </div>
+              <div className="kpi-value">{money(summary.totalIncome)}</div>
+              <span className="kpi-sub">entradas no mês</span>
+            </div>
 
-        <div className="kpi">
-          <div className="kpi-top">
-            <span className="kpi-dot" style={{ background: 'var(--critical)' }} aria-hidden="true" />
-            <span className="label">Despesas</span>
-          </div>
-          <div className="kpi-value">{money(summary.totalExpense)}</div>
-          <span className="kpi-sub">saídas no mês</span>
-        </div>
+            <div className="kpi">
+              <div className="kpi-top">
+                <span className="kpi-dot" style={{ background: 'var(--critical)' }} aria-hidden="true" />
+                <span className="label">Despesas</span>
+              </div>
+              <div className="kpi-value">{money(summary.totalExpense)}</div>
+              <span className="kpi-sub">saídas no mês</span>
+            </div>
 
-        <div className="kpi">
-          <div className="kpi-top">
-            <span className="kpi-dot" style={{ background: 'var(--brand)' }} aria-hidden="true" />
-            <span className="label">Lançamentos</span>
-          </div>
-          <div className="kpi-value">{summary.count > 0 ? summary.count : '—'}</div>
-          <span className="kpi-sub">
-            <Link to="/lancamentos" style={{ color: 'var(--brand-ink)' }}>
-              ver todos
-            </Link>
-          </span>
-        </div>
-      </section>
+            <div className="kpi">
+              <div className="kpi-top">
+                <span className="kpi-dot" style={{ background: 'var(--brand)' }} aria-hidden="true" />
+                <span className="label">Lançamentos</span>
+              </div>
+              <div className="kpi-value">{summary.count > 0 ? summary.count : '—'}</div>
+              <span className="kpi-sub">
+                <Link to="/lancamentos" style={{ color: 'var(--brand-ink)' }}>
+                  ver todos
+                </Link>
+              </span>
+            </div>
+          </section>
+        </>
+      )}
 
       <Insights privateMode={privateMode} />
 
