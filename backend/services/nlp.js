@@ -15,21 +15,31 @@ const INCOME_KEYWORDS = [
   'salário', 'salario', 'pix recebido', 'reembolso'
 ];
 
+// Gírias de dinheiro no Brasil valem como reais: "80 pila", "50 conto", "20 mango".
+// Sem isso, com o reforço do LLM desligado (sem ANTHROPIC_API_KEY), o bot ignora
+// metade das mensagens reais de quem manda gasto no WhatsApp.
+const MONEY_WORDS = 'reais|real|pilas?|contos?|mangos?|mang[ãa]o|paus?|pratas?|grana|dinheiros?';
+
+// Multiplicador de milhar, opcional. O \b evita comer o "k" de "karma" ou o "kg"
+// de "50kg" e virar cinquenta mil por engano.
+const MULT = '(?:\\s*(k|mil)\\b)?';
+
 const VALUE_PATTERNS = [
-  /r\$\s*([\d.,]+)/i,
-  /([\d.,]+)\s*reais/i,
-  /(?:gastei|paguei|comprei|gasto de|torrei)\s+(?:r\$\s*)?([\d.,]+)/i,
-  /(?:recebi|caiu|ganhei|depositaram)\s+(?:r\$\s*)?([\d.,]+)/i
+  new RegExp(`r\\$\\s*([\\d.,]+)${MULT}`, 'i'),                                   // R$ explícito
+  new RegExp(`([\\d.,]+)${MULT}\\s*(?:${MONEY_WORDS})`, 'i'),                     // 45 reais / 80 pila / 2 mil conto
+  new RegExp(`([\\d.,]+)\\s*(k|mil)\\b`, 'i'),                                    // 2k / 3 mil (sem palavra de dinheiro)
+  new RegExp(`(?:gastei|paguei|comprei|gasto de|torrei|recebi|caiu|ganhei|depositaram)\\s+(?:r\\$\\s*)?([\\d.,]+)${MULT}`, 'i')
 ];
 
 function parseAmount(text) {
   for (const pattern of VALUE_PATTERNS) {
     const match = text.match(pattern);
-    if (match) {
-      const normalized = match[1].replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.');
-      const value = parseFloat(normalized);
-      if (!Number.isNaN(value)) return value;
-    }
+    if (!match) continue;
+    const normalized = match[1].replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.');
+    let value = parseFloat(normalized);
+    if (Number.isNaN(value)) continue;
+    if (match[2]) value *= 1000; // "2k" e "1,5 mil" viram 2000 e 1500
+    return value;
   }
   return null;
 }
