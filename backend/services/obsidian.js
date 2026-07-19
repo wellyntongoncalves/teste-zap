@@ -1,5 +1,6 @@
 const fs = require('fs/promises');
 const path = require('path');
+const { formatBRL } = require('./money');
 
 // --- Como as notas do Obsidian são gravadas ---
 //
@@ -39,10 +40,19 @@ function buildEmptyNote(userEmail, monthKey) {
   ].join('\n');
 }
 
+// Lê o valor de uma linha já gravada. Linhas novas vêm em pt-BR ("R$ 1.234,56");
+// as antigas em toFixed ("R$ 1234.56"). Só as novas têm vírgula — isso desambigua:
+// com vírgula, ponto é milhar; sem vírgula, ponto é decimal (formato legado).
+function parseRowAmount(raw) {
+  return raw.includes(',')
+    ? parseFloat(raw.replace(/\./g, '').replace(',', '.'))
+    : parseFloat(raw);
+}
+
 function insertRow(content, transaction) {
   const dateStr = new Date(transaction.occurredAt).toISOString().slice(0, 10);
   const typeLabel = TYPE_LABELS[transaction.type] || transaction.type;
-  const row = `| ${dateStr} | ${typeLabel} | R$ ${parseFloat(transaction.amount).toFixed(2)} | ${transaction.category} | ${transaction.description || ''} |`;
+  const row = `| ${dateStr} | ${typeLabel} | ${formatBRL(transaction.amount)} | ${transaction.category} | ${transaction.description || ''} |`;
 
   const lines = content.split('\n');
   const separatorIndex = lines.findIndex((line) => line.startsWith('|------'));
@@ -51,14 +61,14 @@ function insertRow(content, transaction) {
   const net = lines
     .filter((line) => line.startsWith('|') && !line.startsWith('|------') && !line.startsWith('| Data'))
     .reduce((sum, line) => {
-      const match = line.match(/\|\s*(Receita|Despesa|Transferência)\s*\|\s*R\$\s*([\d.]+)/);
+      const match = line.match(/\|\s*(Receita|Despesa|Transferência)\s*\|\s*R\$\s*([\d.,]+)/);
       if (!match) return sum;
-      const amount = parseFloat(match[2]);
+      const amount = parseRowAmount(match[2]);
       return match[1] === 'Despesa' ? sum - amount : sum + amount;
     }, 0);
 
   const totalLineIndex = lines.findIndex((line) => line.startsWith('**Saldo líquido do mês:**'));
-  lines[totalLineIndex] = `**Saldo líquido do mês:** R$ ${net.toFixed(2)}`;
+  lines[totalLineIndex] = `**Saldo líquido do mês:** ${formatBRL(net)}`;
 
   return lines.join('\n');
 }

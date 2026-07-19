@@ -7,6 +7,7 @@ const Goal = require('../models/goal');
 const Tag = require('../models/tag');
 const { computeBalances } = require('./balance');
 const { buildInsights } = require('./insights');
+const { formatBRL } = require('./money');
 
 // Opus 4.8: `budget_tokens` e os parâmetros de sampling (temperature/top_p/top_k)
 // foram REMOVIDOS e retornam 400. A profundidade de raciocínio se controla com
@@ -44,7 +45,7 @@ function monthRange(date) {
 }
 
 function brl(value) {
-  return `R$ ${(Number(value) || 0).toFixed(2)}`;
+  return formatBRL(value);
 }
 
 async function sumBy(where) {

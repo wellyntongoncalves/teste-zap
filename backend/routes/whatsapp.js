@@ -9,6 +9,7 @@ const { sendWhatsAppMessage } = require('../services/whatsapp');
 const { appendTransactionNote } = require('../services/obsidian');
 const { ask, isConfigured: veroIsConfigured } = require('../services/assistant');
 const { toOccurredAt } = require('../services/dates');
+const { formatBRL } = require('../services/money');
 
 const router = express.Router();
 
@@ -144,7 +145,7 @@ router.post('/webhook', verifyTwilioSignature, async (req, res) => {
   const verb = transaction.type === 'income' ? 'Receita registrada' : 'Gasto registrado';
   await sendWhatsAppMessage(
     from,
-    `${verb}: R$ ${transaction.amount} em "${transaction.category}". Confira no seu dashboard.`
+    `${verb}: ${formatBRL(transaction.amount)} em "${transaction.category}". Confira no seu dashboard.`
   );
 
   return res.sendStatus(200);
