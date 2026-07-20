@@ -8,6 +8,7 @@
 
 const app = require('../server');
 const sequelize = require('../config/database');
+const { runMigrations } = require('../database/migrate');
 
 let ready;
 function ensureReady() {
@@ -15,6 +16,8 @@ function ensureReady() {
     ready = (async () => {
       await sequelize.authenticate();
       await sequelize.sync();
+      // sync() só cria tabelas novas; colunas novas em tabelas antigas vêm daqui.
+      await runMigrations();
     })();
   }
   return ready;

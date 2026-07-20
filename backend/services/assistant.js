@@ -5,6 +5,8 @@ const Account = require('../models/account');
 const Budget = require('../models/budget');
 const Goal = require('../models/goal');
 const Tag = require('../models/tag');
+const Recurrence = require('../models/recurrence');
+const { nextDueDate } = require('./recurrences');
 const { computeBalances } = require('./balance');
 const { buildInsights } = require('./insights');
 const { formatBRL } = require('./money');
@@ -124,13 +126,14 @@ async function buildContext(user) {
   const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const { start } = monthRange(now);
 
-  const [thisMonth, previousMonth, byCategory, accounts, budgets, goals, recent, insights] = await Promise.all([
+  const [thisMonth, previousMonth, byCategory, accounts, budgets, goals, recurrences, recent, insights] = await Promise.all([
     monthTotals(user.id, now),
     monthTotals(user.id, lastMonth),
     expensesByCategory(user.id, now),
     Account.findAll({ where: { userId: user.id, archivedAt: null }, order: [['createdAt', 'ASC']] }),
     budgetStatus(user.id, now),
     Goal.findAll({ where: { userId: user.id, status: 'active' }, order: [['createdAt', 'ASC']] }),
+    Recurrence.findAll({ where: { userId: user.id, active: true }, order: [['dayOfMonth', 'ASC']] }),
     Transaction.findAll({
       where: { userId: user.id },
       order: [['occurredAt', 'DESC']],
@@ -148,6 +151,7 @@ async function buildContext(user) {
     accounts: await computeBalances(accounts),
     budgets,
     goals,
+    recurrences,
     recent,
     insights
   };
@@ -206,9 +210,23 @@ function formatContext(ctx) {
     });
   }
 
+  // Contas fixas CADASTRADAS pelo usuário — diferente das "detectadas" abaixo,
+  // que são só um padrão que o app enxergou no histórico. Estas são certas.
+  lines.push('', '## Contas fixas cadastradas');
+  if (ctx.recurrences.length === 0) {
+    lines.push('- (nenhuma conta fixa cadastrada)');
+  } else {
+    ctx.recurrences.forEach((r) => {
+      const verbo = r.type === 'income' ? 'entra' : 'sai';
+      const next = nextDueDate(r);
+      const quando = next ? new Date(`${next}T12:00:00Z`).toLocaleDateString('pt-BR') : 'encerrada';
+      lines.push(`- ${r.description} (${r.category}): ${brl(r.amount)} — ${verbo} todo dia ${r.dayOfMonth}, próxima em ${quando}`);
+    });
+  }
+
   const { recurring, monthlyRecurringCost, projection } = ctx.insights;
 
-  lines.push('', '## Cobranças recorrentes detectadas');
+  lines.push('', '## Cobranças recorrentes detectadas (padrão no histórico)');
   if (recurring.length === 0) {
     lines.push('- (nenhum padrão recorrente identificado ainda)');
   } else {

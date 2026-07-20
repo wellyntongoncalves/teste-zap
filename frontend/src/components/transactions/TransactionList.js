@@ -173,6 +173,12 @@ export default function TransactionList({ transactions, privateMode, onChanged }
                   {transaction.installmentTotal && (
                     <span className="row-sub"> ({transaction.installmentNumber}/{transaction.installmentTotal})</span>
                   )}
+                  {/* Nasceu de uma conta fixa: explica por que ele apareceu sozinho */}
+                  {transaction.recurrenceId && (
+                    <span className="pill pill-transfer" style={{ marginLeft: 6 }}>
+                      <span aria-hidden="true">🔁</span> Fixo
+                    </span>
+                  )}
                 </td>
                 <td
                   className="num"

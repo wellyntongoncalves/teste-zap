@@ -96,6 +96,13 @@ const Transaction = sequelize.define('Transaction', {
     type: DataTypes.INTEGER,
     allowNull: true,
     field: 'installment_total'
+  },
+  // Conta fixa que gerou este lançamento (nulo = avulso). Sem associação/FK de
+  // propósito: apagar a regra não pode apagar o histórico que ela já registrou.
+  recurrenceId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    field: 'recurrence_id'
   }
 }, {
   tableName: 'transactions',

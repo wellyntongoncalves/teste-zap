@@ -8,6 +8,7 @@ const Tag = require('../models/tag');
 const authMiddleware = require('../middleware/auth');
 const { appendTransactionNote } = require('../services/obsidian');
 const { toOccurredAt } = require('../services/dates');
+const { materializeRecurrences } = require('../services/recurrences');
 
 const router = express.Router();
 router.use(authMiddleware);
@@ -35,9 +36,23 @@ const monthYear = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numer
 const formatBRL = (value) => brl.format(Number(value) || 0);
 const formatDatePt = (date) => dayMonthYear.format(new Date(date));
 
+// Contas fixas viram lançamentos aqui, na hora de olhar o mês — não existe cron
+// no serverless. Sem nada vencido, custa uma consulta e nada mais.
+async function catchUpRecurrences(req) {
+  try {
+    await materializeRecurrences(req.user);
+  } catch (err) {
+    // Listar o mês é mais importante do que gerar a conta fixa: se a geração
+    // falhar, a tela ainda abre e a próxima visita tenta de novo.
+    console.warn('Falha ao materializar contas fixas:', err.message);
+  }
+}
+
 router.get('/', async (req, res) => {
   const { month, year, type, accountId } = req.query;
   const { start, end } = monthRange(month, year);
+
+  await catchUpRecurrences(req);
 
   const transactions = await Transaction.findAll({
     where: {
@@ -181,6 +196,8 @@ router.delete('/:id', async (req, res) => {
 router.get('/summary', async (req, res) => {
   const { month, year } = req.query;
   const { start, end } = monthRange(month, year);
+
+  await catchUpRecurrences(req);
 
   const baseWhere = {
     userId: req.user.id,

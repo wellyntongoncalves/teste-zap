@@ -3,6 +3,7 @@ require('express-async-errors'); // encaminha erros de rotas async para o middle
 const express = require('express');
 const cors = require('cors');
 const sequelize = require('./config/database');
+const { runMigrations } = require('./database/migrate');
 
 // Rede de segurança: em serverless, uma exceção não tratada MATA a função e a
 // requisição fica "pendurada" até o timeout. Logamos e seguimos vivos.
@@ -20,6 +21,7 @@ const goalRoutes = require('./routes/goals');
 const assistantRoutes = require('./routes/assistant');
 const insightRoutes = require('./routes/insights');
 const userRoutes = require('./routes/users');
+const recurrenceRoutes = require('./routes/recurrences');
 
 const app = express();
 
@@ -42,6 +44,7 @@ app.use('/api/goals', goalRoutes);
 app.use('/api/assistant', assistantRoutes);
 app.use('/api/insights', insightRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/recurrences', recurrenceRoutes);
 
 // Middleware de erro: qualquer erro de rota vira uma resposta JSON limpa em vez
 // de derrubar o servidor. Erros de validação/enum do Postgres viram 400.
@@ -60,6 +63,7 @@ const PORT = process.env.PORT || 3000;
 async function start() {
   await sequelize.authenticate();
   await sequelize.sync();
+  await runMigrations();
   app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
 }
 
