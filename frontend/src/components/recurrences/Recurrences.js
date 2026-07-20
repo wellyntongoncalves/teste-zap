@@ -45,10 +45,12 @@ function dueLabel(iso) {
 
 export default function Recurrences({ privateMode, onChanged }) {
   const [rules, setRules] = useState([]);
+  const [suggestions, setSuggestions] = useState([]);
   const [accounts, setAccounts] = useState([]);
   const [form, setForm] = useState(EMPTY_FORM);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [busySuggestion, setBusySuggestion] = useState('');
   const [error, setError] = useState('');
   const [ready, setReady] = useState(false);
 
@@ -56,6 +58,14 @@ export default function Recurrences({ privateMode, onChanged }) {
     try {
       const { data } = await api.get('/recurrences');
       setRules(data);
+
+      // Sugestões são um extra: se falharem, a lista de contas fixas continua.
+      try {
+        const { data: found } = await api.get('/recurrences/suggestions');
+        setSuggestions(found);
+      } catch {
+        setSuggestions([]);
+      }
     } finally {
       setReady(true);
     }
@@ -97,6 +107,25 @@ export default function Recurrences({ privateMode, onChanged }) {
     } finally {
       setSaving(false);
     }
+  }
+
+  async function acceptSuggestion(suggestion) {
+    setBusySuggestion(suggestion.signature);
+    try {
+      await api.post('/recurrences/suggestions/accept', { signature: suggestion.signature });
+      await load();
+      if (onChanged) onChanged();
+    } catch (err) {
+      setError(err.response?.data?.error || 'Não consegui cadastrar essa conta fixa.');
+    } finally {
+      setBusySuggestion('');
+    }
+  }
+
+  async function dismissSuggestion(suggestion) {
+    // Some da tela na hora; o backend guarda a dispensa pra nunca mais oferecer.
+    setSuggestions((prev) => prev.filter((s) => s.signature !== suggestion.signature));
+    await api.post('/recurrences/suggestions/dismiss', { signature: suggestion.signature });
   }
 
   async function toggleActive(rule) {
@@ -239,6 +268,72 @@ export default function Recurrences({ privateMode, onChanged }) {
             </button>
           </div>
         </form>
+      )}
+
+      {/* Com o formulário fechado, o erro (ex: falha ao aceitar sugestão) não
+          teria onde aparecer — o alerta do form só existe com ele aberto. */}
+      {error && !open && (
+        <div className="card-body" style={{ paddingBottom: 0 }}>
+          <div className="alert alert-error" role="alert">
+            <span aria-hidden="true">⚠</span>
+            <span>{error}</span>
+          </div>
+        </div>
+      )}
+
+      {suggestions.length > 0 && (
+        <div className="card-body" style={{ borderBottom: '1px solid var(--line)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div>
+              <span className="row-title">Isso parece fixo</span>
+              <div className="row-sub">
+                Vi esse padrão se repetindo no seu histórico. Cadastrar deixa o lançamento automático.
+              </div>
+            </div>
+
+            {suggestions.map((s) => (
+              <div
+                key={s.signature}
+                className="page-head"
+                style={{
+                  gap: 10,
+                  background: 'var(--brand-wash)',
+                  border: '1px solid var(--line)',
+                  borderRadius: 'var(--r-sm)',
+                  padding: '11px 13px'
+                }}
+              >
+                <div className="row-main">
+                  <span className="row-title">{s.label}</span>
+                  <span className="row-sub">
+                    {money(s.typicalAmount)} · {s.type === 'income' ? 'entra' : 'sai'} por volta do dia{' '}
+                    {s.typicalDay} · visto em {s.occurrences} meses
+                  </span>
+                </div>
+                <div className="form-actions" style={{ flexWrap: 'nowrap' }}>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    style={{ padding: '6px 12px', fontSize: 13 }}
+                    onClick={() => acceptSuggestion(s)}
+                    disabled={busySuggestion !== ''}
+                  >
+                    {busySuggestion === s.signature ? 'Cadastrando…' : 'Cadastrar'}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn"
+                    style={{ padding: '6px 12px', fontSize: 13 }}
+                    onClick={() => dismissSuggestion(s)}
+                    disabled={busySuggestion !== ''}
+                  >
+                    Agora não
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {!ready ? (

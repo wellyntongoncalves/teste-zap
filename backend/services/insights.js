@@ -65,6 +65,7 @@ function describeGroup(group) {
     label: last.description || last.category,
     category: last.category,
     type: last.type,
+    accountId: last.accountId,
     typicalAmount: Math.round(typical * 100) / 100,
     typicalDay: Math.round(median(days)),
     occurrences: new Set(group.map((t) => monthKey(t.occurredAt))).size,
