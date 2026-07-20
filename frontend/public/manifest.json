@@ -26,8 +26,11 @@
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "theme_color": "#00966b",
-  "background_color": "#f4f7f5",
+  "theme_color": "#07110d",
+  "background_color": "#07110d",
   "lang": "pt-BR",
-  "categories": ["finance", "productivity"]
+  "categories": [
+    "finance",
+    "productivity"
+  ]
 }

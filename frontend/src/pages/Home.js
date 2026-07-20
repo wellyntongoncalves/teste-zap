@@ -25,11 +25,13 @@ export default function Home() {
     setLoading(true);
     return Promise.all([
       api.get('/transactions/summary', { params: period }),
-      api.get('/transactions', { params: period })
+      // limit=6: a Home só mostra os últimos. Sem isso ela baixava o mês inteiro
+      // pra jogar fora tudo menos 6 linhas.
+      api.get('/transactions', { params: { ...period, limit: 6 } })
     ])
       .then(([summaryRes, listRes]) => {
         setSummary(summaryRes.data);
-        setRecent(listRes.data.slice(0, 6));
+        setRecent(listRes.data);
       })
       .finally(() => {
         setLoading(false);
@@ -42,6 +44,9 @@ export default function Home() {
   }, [load]);
 
   const monthDate = new Date(period.year, period.month - 1, 1);
+  // O mês corrente ainda está acontecendo; os outros já acabaram. Isso muda o
+  // tempo verbal do resumo e decide se faz sentido projetar o fim do mês.
+  const isCurrentMonth = period.month === now.getMonth() + 1 && period.year === now.getFullYear();
 
   const money = (value) => (privateMode ? '••••••' : formatMoney(value));
   const net = Number(summary.net) || 0;
@@ -90,7 +95,13 @@ export default function Home() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
                 <span aria-hidden="true">{positive ? '▲' : '▼'}</span>
                 <span className="muted">
-                  {positive ? 'Você fechou o mês no positivo' : 'Suas despesas passaram das receitas'}
+                  {isCurrentMonth
+                    ? positive
+                      ? 'Até aqui você está no positivo'
+                      : 'Suas despesas já passaram das receitas'
+                    : positive
+                    ? 'Você fechou o mês no positivo'
+                    : 'Neste mês as despesas passaram das receitas'}
                 </span>
               </div>
             </div>
@@ -131,7 +142,10 @@ export default function Home() {
         </>
       )}
 
-      <Insights privateMode={privateMode} />
+      {/* "Padrões e projeção" é sempre sobre o mês corrente (o backend nem aceita
+          período). Mostrar isso embaixo de um mês passado seria mentira: o
+          usuário leria a projeção de julho achando que é de junho. */}
+      {isCurrentMonth && <Insights privateMode={privateMode} />}
 
       <VeroChat />
 

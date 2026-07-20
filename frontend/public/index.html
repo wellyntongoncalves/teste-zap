@@ -6,8 +6,18 @@
 
     <!-- Pinta a barra do sistema com a cor do app. Uma cor só ficaria errada em
          um dos temas, então cada um tem a sua (--page do theme.css). -->
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f4f7f5" />
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e1211" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f3f7f4" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#07110d" />
+
+    <!-- Tipografia da marca: Manrope (títulos/números), Inter (interface),
+         JetBrains Mono (valores). `display=swap` mostra o texto na fonte de
+         sistema enquanto baixa — ninguém fica olhando pra tela em branco. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&family=JetBrains+Mono:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
 
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     <link rel="icon" href="%PUBLIC_URL%/icon-192.png" />

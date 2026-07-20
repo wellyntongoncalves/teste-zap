@@ -60,13 +60,27 @@ export default function Transactions() {
   const [period, setPeriod] = useState({ month: now.getMonth() + 1, year: now.getFullYear() });
   const [type, setType] = useState('');
   const [accountId, setAccountId] = useState('');
+  // `query` é o que está digitado; `term` é o que já foi pra API. Separar os dois
+  // evita uma requisição por tecla.
+  const [query, setQuery] = useState('');
+  const [term, setTerm] = useState('');
+
+  useEffect(() => {
+    const id = setTimeout(() => setTerm(query.trim()), 300);
+    return () => clearTimeout(id);
+  }, [query]);
 
   const loadTransactions = useCallback(async () => {
     setLoading(true);
     try {
       // A API já filtrava por type e accountId; só faltava a UI pedir.
       const { data } = await api.get('/transactions', {
-        params: { ...period, ...(type ? { type } : {}), ...(accountId ? { accountId } : {}) }
+        params: {
+          ...period,
+          ...(type ? { type } : {}),
+          ...(accountId ? { accountId } : {}),
+          ...(term ? { q: term } : {})
+        }
       });
       setTransactions(data);
     } finally {
@@ -75,7 +89,7 @@ export default function Transactions() {
       setLoading(false);
       setReady(true);
     }
-  }, [period, type, accountId]);
+  }, [period, type, accountId, term]);
 
   useEffect(() => {
     loadTransactions();
@@ -130,6 +144,18 @@ export default function Transactions() {
 
       {/* Um filtro só, acima de tudo que ele afeta — não um por card. */}
       <div className="page-head">
+        <input
+          className="input"
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Buscar por descrição ou categoria"
+          aria-label="Buscar lançamentos"
+          style={{ maxWidth: 320 }}
+        />
+      </div>
+
+      <div className="page-head">
         <div className="toggle" role="group" aria-label="Filtrar por tipo">
           {TYPE_FILTERS.map((f) => (
             <button key={f.value} type="button" aria-pressed={type === f.value} onClick={() => setType(f.value)}>
@@ -159,8 +185,8 @@ export default function Transactions() {
           <h2 className="h2">
             {transactions.length > 0 ? `${transactions.length} lançamentos` : 'Lançamentos do mês'}
           </h2>
-          {(type || accountId) && (
-            <button className="btn" onClick={() => { setType(''); setAccountId(''); }}>
+          {(type || accountId || term) && (
+            <button className="btn" onClick={() => { setType(''); setAccountId(''); setQuery(''); }}>
               Limpar filtros
             </button>
           )}
@@ -170,6 +196,13 @@ export default function Transactions() {
             transactions={transactions}
             privateMode={privateMode}
             onChanged={loadTransactions}
+            emptyLabel={
+              term
+                ? `Nada encontrado para "${term}" neste mês.`
+                : type || accountId
+                ? 'Nenhum lançamento com esses filtros.'
+                : undefined
+            }
           />
         ) : (
           <SkeletonList />

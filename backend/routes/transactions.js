@@ -36,6 +36,15 @@ const monthYear = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numer
 const formatBRL = (value) => brl.format(Number(value) || 0);
 const formatDatePt = (date) => dayMonthYear.format(new Date(date));
 
+// "alimenta" acha "Alimentação": comparamos sem acento e sem caixa, porque
+// ninguém digita "ção" no campo de busca.
+const stripAccents = (text) => text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+function matchCategories(term) {
+  const needle = stripAccents(term);
+  return Transaction.CATEGORIES.filter((category) => stripAccents(category).includes(needle));
+}
+
 // Contas fixas viram lançamentos aqui, na hora de olhar o mês — não existe cron
 // no serverless. Sem nada vencido, custa uma consulta e nada mais.
 async function catchUpRecurrences(req) {
@@ -49,20 +58,40 @@ async function catchUpRecurrences(req) {
 }
 
 router.get('/', async (req, res) => {
-  const { month, year, type, accountId } = req.query;
+  const { month, year, type, accountId, q, limit } = req.query;
   const { start, end } = monthRange(month, year);
 
   await catchUpRecurrences(req);
+
+  // Busca livre: descrição OU categoria. `category` é ENUM no Postgres e iLike em
+  // enum não existe (precisaria de cast) — como a lista é fechada e pequena,
+  // resolvemos o casamento aqui e mandamos um IN, que é exato e barato.
+  const term = typeof q === 'string' ? q.trim() : '';
+  const hitCategories = term ? matchCategories(term) : [];
+  const search = term
+    ? {
+        [Op.or]: [
+          { description: { [Op.iLike]: `%${term}%` } },
+          ...(hitCategories.length ? [{ category: { [Op.in]: hitCategories } }] : [])
+        ]
+      }
+    : {};
+
+  // limit existe pro painel, que só mostra os últimos lançamentos: sem ele a Home
+  // baixava o mês inteiro pra jogar fora tudo menos 6 linhas.
+  const max = Number.parseInt(limit, 10);
 
   const transactions = await Transaction.findAll({
     where: {
       userId: req.user.id,
       occurredAt: { [Op.gte]: start, [Op.lt]: end },
       ...(type ? { type } : {}),
-      ...(accountId ? { accountId } : {})
+      ...(accountId ? { accountId } : {}),
+      ...search
     },
     include: [{ model: Tag, attributes: ['id', 'name', 'color'], through: { attributes: [] } }],
-    order: [['occurredAt', 'DESC']]
+    order: [['occurredAt', 'DESC']],
+    ...(Number.isInteger(max) && max > 0 ? { limit: Math.min(max, 200) } : {})
   });
 
   res.json(transactions);

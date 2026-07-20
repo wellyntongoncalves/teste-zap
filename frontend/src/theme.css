@@ -1,101 +1,130 @@
 /* =========================================================================
    MeuBolso — sistema de design
    Tokens em :root; os componentes só falam por papel (--surface, --ink...),
-   nunca por hex cru. O dark é redefinido em dois escopos: a media query cobre
-   a preferência do SO e o [data-theme] cobre o botão do usuário, que precisa
-   ganhar nos dois sentidos.
+   nunca por hex cru. O ESCURO é o padrão (a identidade da marca é escura); o
+   claro é redefinido em dois escopos: a media query cobre a preferência do SO
+   e o [data-theme] cobre o botão do usuário, que precisa ganhar nos dois
+   sentidos.
 
-   As cores de dado (--brand-*, --good, --critical) foram validadas pelo
-   script do skill de dataviz contra estas superfícies — não trocar no olho.
+   Todo hex aqui passou pelo validador de contraste do skill dataviz, papel a
+   papel (texto >= 4.5:1, preenchimento >= 3:1) — não trocar no olho.
    ========================================================================= */
 
+/* O DARK É O PADRÃO — a identidade do MeuBolso é escura (brandbook do dono,
+   `docs/brand/`). O tema claro continua existindo e ganha quando o SO pede claro
+   ou quando o usuário aperta o botão; por isso ele mora em dois seletores e o
+   escuro mora só aqui. `:where()` zera a especificidade da guarda, então
+   [data-theme] sempre ganha da media query. */
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 
-  /* superfícies e neutros — viés levemente esverdeado, puxando pro acento */
-  --page: #f4f7f5;
-  --surface: #ffffff;
-  --surface-2: #f8faf9;
-  --ink: #0e1211;
-  --ink-2: #4e5654;
-  --muted: #828a87;
-  --line: #e3e8e5;
-  --line-2: #cfd6d3;
+  /* superfícies — preto esverdeado do brandbook, não cinza neutro */
+  --page: #07110d;
+  --surface: #0b1a14;
+  --surface-2: #12271e;
+  --ink: #f3f7f4;
+  --ink-2: #c6d6ce;
+  --muted: #94a69d;
+  --line: #1c332b;
+  --line-2: #2a4a3c;
 
-  /* dado (validados: chroma >= 0.1, contraste >= 3:1 na superfície) */
-  --brand: #00966b;
-  --brand-ink: #007553; /* texto de marca: contraste WCAG em superfície clara */
-  --brand-wash: #e6f4ef;
-  --good: #0ca30c;
-  --good-ink: #006300;
-  --critical: #d03b3b;
-  --critical-ink: #b02a2a;
-  --grid: #e9edeb;
+  /* dado e estado — cada papel abaixo passou no validador de contraste
+     (scripts do skill dataviz). NÃO trocar no olho: ver docs/brand/paleta.md */
+  --brand: #35d07f;      /* verde da marca: preenche (8.94:1) */
+  --brand-ink: #76f0a7;  /* verde claro: carrega TEXTO (12.62:1) */
+  --brand-wash: #12271e;
+  --good: #35d07f;
+  --good-ink: #76f0a7;
+  --critical: #ff662b;   /* laranja do brandbook (6.13:1) */
+  --critical-ink: #ff662b;
+  --warn: #f5b942;
+  --warn-ink: #f5b942;
+  --info: #5b8cff;
+  --info-ink: #5b8cff;
+  --grid: #16281f;
 
-  --on-brand: #ffffff;
+  /* texto DENTRO do botão de marca é ESCURO: branco sobre o verde dá 1.85 e
+     reprova. Vale nos dois temas. */
+  --on-brand: #07110d;
 
   /* forma */
   --r-sm: 6px;
   --r: 10px;
   --r-lg: 14px;
-  --shadow: 0 1px 2px rgba(14, 18, 17, 0.04), 0 2px 6px rgba(14, 18, 17, 0.06);
-  --shadow-lg: 0 10px 30px -8px rgba(14, 18, 17, 0.14), 0 3px 8px rgba(14, 18, 17, 0.06);
-  --ring: 0 0 0 3px var(--brand-wash);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.32);
+  --shadow-lg: 0 14px 38px -10px rgba(0, 0, 0, 0.6), 0 3px 10px rgba(0, 0, 0, 0.45);
+  --ring: 0 0 0 3px rgba(53, 208, 127, 0.24);
 
-  /* tipo — system sans em tudo, inclusive nos números grandes */
-  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* tipo do brandbook: Manrope nos títulos e números grandes, Inter na
+     interface, JetBrains Mono nos valores (coluna de dinheiro alinha melhor).
+     O fallback de sistema vem junto: se a fonte não carregar, nada quebra. */
+  --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Manrope", var(--font);
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:where(:not([data-theme="light"])) {
-    color-scheme: dark;
-    --page: #0e1211;
-    --surface: #191d1b;
-    --surface-2: #1f2422;
-    --ink: #f2f5f3;
-    --ink-2: #b4bdb9;
-    --muted: #7e8784;
-    --line: #272d2a;
-    --line-2: #39413d;
+/* ---- tema claro: mesmos papéis, hexes próprios ----
+   O verde #35d07f do brandbook REPROVA em superfície clara (2.00 como texto,
+   2.00 como preenchimento). No claro a marca escurece: #0e7350 no texto,
+   #19a165 no preenchimento. */
+@media (prefers-color-scheme: light) {
+  :root:where(:not([data-theme="dark"])) {
+    color-scheme: light;
+    --page: #f3f7f4;
+    --surface: #ffffff;
+    --surface-2: #f3f7f4;
+    --ink: #07110d;
+    --ink-2: #3c4a44;
+    --muted: #5f706a;
+    --line: #dfe7e3;
+    --line-2: #c7d3cd;
 
-    --brand: #22a583;
-    --brand-ink: #35c39d;
-    --brand-wash: #16302a;
-    --good: #0ca30c;
-    --good-ink: #3cc73c;
-    --critical: #d03b3b;
-    --critical-ink: #e96a6a;
-    --grid: #242a27;
+    --brand: #19a165;
+    --brand-ink: #0e7350;
+    --brand-wash: #e4f6ec;
+    --good: #19a165;
+    --good-ink: #0e7350;
+    --critical: #c4441a;
+    --critical-ink: #b33c14;
+    --warn: #8a5a00;
+    --warn-ink: #8a5a00;
+    --info: #4a78e8;
+    --info-ink: #2f5fd0;
+    --grid: #e9efec;
 
-    --on-brand: #06120e;
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.3);
-    --shadow-lg: 0 12px 34px -8px rgba(0, 0, 0, 0.55), 0 3px 8px rgba(0, 0, 0, 0.4);
+    --shadow: 0 1px 2px rgba(7, 17, 13, 0.04), 0 2px 6px rgba(7, 17, 13, 0.06);
+    --shadow-lg: 0 10px 30px -8px rgba(7, 17, 13, 0.14), 0 3px 8px rgba(7, 17, 13, 0.06);
+    --ring: 0 0 0 3px var(--brand-wash);
   }
 }
 
-:root[data-theme="dark"] {
-  color-scheme: dark;
-  --page: #0e1211;
-  --surface: #191d1b;
-  --surface-2: #1f2422;
-  --ink: #f2f5f3;
-  --ink-2: #b4bdb9;
-  --muted: #7e8784;
-  --line: #272d2a;
-  --line-2: #39413d;
+:root[data-theme="light"] {
+  color-scheme: light;
+  --page: #f3f7f4;
+  --surface: #ffffff;
+  --surface-2: #f3f7f4;
+  --ink: #07110d;
+  --ink-2: #3c4a44;
+  --muted: #5f706a;
+  --line: #dfe7e3;
+  --line-2: #c7d3cd;
 
-  --brand: #22a583;
-  --brand-ink: #35c39d;
-  --brand-wash: #16302a;
-  --good: #0ca30c;
-  --good-ink: #3cc73c;
-  --critical: #d03b3b;
-  --critical-ink: #e96a6a;
-  --grid: #242a27;
+  --brand: #19a165;
+  --brand-ink: #0e7350;
+  --brand-wash: #e4f6ec;
+  --good: #19a165;
+  --good-ink: #0e7350;
+  --critical: #c4441a;
+  --critical-ink: #b33c14;
+  --warn: #8a5a00;
+  --warn-ink: #8a5a00;
+  --info: #4a78e8;
+  --info-ink: #2f5fd0;
+  --grid: #e9efec;
 
-  --on-brand: #06120e;
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 12px 34px -8px rgba(0, 0, 0, 0.55), 0 3px 8px rgba(0, 0, 0, 0.4);
+  --shadow: 0 1px 2px rgba(7, 17, 13, 0.04), 0 2px 6px rgba(7, 17, 13, 0.06);
+  --shadow-lg: 0 10px 30px -8px rgba(7, 17, 13, 0.14), 0 3px 8px rgba(7, 17, 13, 0.06);
+  --ring: 0 0 0 3px var(--brand-wash);
 }
 
 * { box-sizing: border-box; }
@@ -117,8 +146,8 @@ body {
 }
 
 /* ---------- tipografia ---------- */
-.h1 { font-size: 20px; font-weight: 650; letter-spacing: -0.01em; margin: 0; }
-.h2 { font-size: 17px; font-weight: 650; letter-spacing: -0.01em; margin: 0; }
+.h1 { font-family: var(--font-display); font-size: 20px; font-weight: 700; letter-spacing: -0.01em; margin: 0; }
+.h2 { font-family: var(--font-display); font-size: 17px; font-weight: 700; letter-spacing: -0.01em; margin: 0; }
 .label {
   font-size: 12px;
   font-weight: 600;
@@ -173,18 +202,20 @@ body {
 }
 /* figuras proporcionais no valor grande — tabular-nums só em coluna */
 .kpi-value {
+  font-family: var(--font-display);
   font-size: 28px;
-  font-weight: 660;
+  font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.1;
 }
 .kpi-sub { font-size: 12.5px; color: var(--muted); }
 .kpi.is-hero { grid-column: 1 / -1; }
 
-/* número que o painel lidera: >=48px, mesma sans, figuras proporcionais */
+/* número que o painel lidera: >=48px, Manrope, figuras proporcionais */
 .hero-value {
+  font-family: var(--font-display);
   font-size: clamp(38px, 9vw, 52px);
-  font-weight: 680;
+  font-weight: 800;
   letter-spacing: -0.03em;
   line-height: 1.05;
 }
@@ -245,6 +276,7 @@ table.data td {
 table.data tbody tr:last-child td { border-bottom: none; }
 table.data tbody tr:hover td { background: var(--surface-2); }
 td.num, th.num { text-align: right; white-space: nowrap; }
+td.num { font-family: var(--font-mono); font-weight: 600; font-size: 13.5px; }
 table.data td.c-desc { color: var(--muted); }
 
 /* ---------- tabela que vira lista no celular ----------
@@ -420,7 +452,15 @@ table.data td.c-desc { color: var(--muted); }
 .row-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .row-title { font-weight: 600; font-size: 15px; }
 .row-sub { font-size: 12.5px; color: var(--muted); }
-.row-value { font-weight: 650; font-size: 15px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+/* valor em lista e em coluna usa a mono do brandbook: os dígitos têm a mesma
+   largura, então R$ 1.250,00 e R$ 90,00 alinham sem esforço. */
+.row-value {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
 
 .icon-btn-sm {
   border: 1px solid transparent;
@@ -608,19 +648,17 @@ table.data td.c-desc { color: var(--muted); }
   letter-spacing: -0.02em;
   font-size: 17px;
 }
+/* O escudo é a marca: ele mesmo tem forma, então não vai dentro de um quadrado
+   colorido — fica em verde sobre o fundo, como no brandbook. */
 .brand-badge {
   width: 26px;
   height: 26px;
-  border-radius: 7px;
-  background: var(--brand);
-  color: var(--on-brand);
+  color: var(--brand);
   display: grid;
   place-items: center;
-  font-size: 13px;
-  font-weight: 800;
   flex: none;
 }
-.brand-badge svg { width: 62%; height: 62%; }
+.brand-badge svg { width: 100%; height: 100%; }
 .appbar-actions { display: flex; align-items: center; gap: 6px; }
 .icon-btn {
   width: 34px;

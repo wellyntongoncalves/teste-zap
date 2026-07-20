@@ -9,7 +9,7 @@ const TYPES = {
   transfer: { label: 'Transferência', className: 'pill pill-transfer', mark: '↔' }
 };
 
-export default function TransactionList({ transactions, privateMode, onChanged }) {
+export default function TransactionList({ transactions, privateMode, onChanged, emptyLabel }) {
   const [editing, setEditing] = useState(null);
   const [draft, setDraft] = useState({});
   const [busy, setBusy] = useState(false);
@@ -20,7 +20,7 @@ export default function TransactionList({ transactions, privateMode, onChanged }
     return (
       <div className="empty">
         <div className="empty-mark">🧾</div>
-        Nenhuma transação neste mês.
+        {emptyLabel || 'Nenhuma transação neste mês.'}
       </div>
     );
   }
