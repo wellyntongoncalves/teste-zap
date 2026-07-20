@@ -78,7 +78,8 @@ export default function TransactionList({ transactions, privateMode, onChanged }
 
   return (
     <div className="table-wrap">
-      <table className="data">
+      {/* stack: no celular cada linha vira cartão (ver theme.css) */}
+      <table className="data stack">
         <thead>
           <tr>
             <th>Data</th>
@@ -97,8 +98,8 @@ export default function TransactionList({ transactions, privateMode, onChanged }
 
             if (isEditing) {
               return (
-                <tr key={transaction.id}>
-                  <td>
+                <tr key={transaction.id} className="is-editing">
+                  <td className="c-date">
                     <input
                       className="input"
                       type="date"
@@ -107,13 +108,13 @@ export default function TransactionList({ transactions, privateMode, onChanged }
                       style={{ padding: '6px 8px', fontSize: 13 }}
                     />
                   </td>
-                  <td>
+                  <td className="c-type">
                     <span className={type.className}>
                       <span aria-hidden="true">{type.mark}</span>
                       {type.label}
                     </span>
                   </td>
-                  <td>
+                  <td className="c-cat">
                     <select
                       className="input"
                       value={draft.category}
@@ -125,7 +126,7 @@ export default function TransactionList({ transactions, privateMode, onChanged }
                       ))}
                     </select>
                   </td>
-                  <td>
+                  <td className="c-desc">
                     <input
                       className="input"
                       value={draft.description}
@@ -133,7 +134,7 @@ export default function TransactionList({ transactions, privateMode, onChanged }
                       style={{ padding: '6px 8px', fontSize: 13 }}
                     />
                   </td>
-                  <td className="num">
+                  <td className="num c-amount">
                     <input
                       className="input"
                       type="number"
@@ -143,7 +144,7 @@ export default function TransactionList({ transactions, privateMode, onChanged }
                       style={{ padding: '6px 8px', fontSize: 13, width: 100, textAlign: 'right' }}
                     />
                   </td>
-                  <td>
+                  <td className="c-actions">
                     <div style={{ display: 'flex', gap: 4 }}>
                       <button className="btn btn-primary" onClick={() => save(transaction)} disabled={busy} style={{ padding: '5px 10px', fontSize: 12 }}>
                         Salvar
@@ -159,16 +160,16 @@ export default function TransactionList({ transactions, privateMode, onChanged }
 
             return (
               <tr key={transaction.id}>
-                <td style={{ whiteSpace: 'nowrap' }}>{formatDate(transaction.occurredAt)}</td>
-                <td>
+                <td className="c-date" style={{ whiteSpace: 'nowrap' }}>{formatDate(transaction.occurredAt)}</td>
+                <td className="c-type">
                   {/* cor + ícone + rótulo: o tipo nunca depende só da cor */}
                   <span className={type.className}>
                     <span aria-hidden="true">{type.mark}</span>
                     {type.label}
                   </span>
                 </td>
-                <td>{transaction.category}</td>
-                <td style={{ color: 'var(--muted)' }}>
+                <td className="c-cat">{transaction.category}</td>
+                <td className="c-desc">
                   {transaction.description || '—'}
                   {transaction.installmentTotal && (
                     <span className="row-sub"> ({transaction.installmentNumber}/{transaction.installmentTotal})</span>
@@ -181,7 +182,7 @@ export default function TransactionList({ transactions, privateMode, onChanged }
                   )}
                 </td>
                 <td
-                  className="num"
+                  className="num c-amount"
                   style={{
                     color: transaction.type === 'income' ? 'var(--good-ink)' : 'var(--ink)',
                     fontWeight: 600
@@ -190,7 +191,7 @@ export default function TransactionList({ transactions, privateMode, onChanged }
                   {privateMode ? '••••' : `${transaction.type === 'expense' ? '−' : ''}${formatMoney(amount)}`}
                 </td>
                 {editable && (
-                  <td>
+                  <td className="c-actions">
                     <div style={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
                       <button
                         className="icon-btn-sm"

@@ -17,18 +17,25 @@ const TYPE_FILTERS = [
 // Placeholder da lista enquanto a primeira carga não volta — evita o flash de
 // "nenhuma transação" e dá a forma do conteúdo real.
 function SkeletonList() {
-  const widths = [58, 84, 120, 72];
+  // As mesmas colunas da lista real, na mesma ordem: no celular o CSS `stack`
+  // rearranja as duas em cartão, então o placeholder já nasce com a forma certa.
+  const cells = [
+    { cls: 'c-date', width: 58 },
+    { cls: 'c-type', width: 72 },
+    { cls: 'c-desc', width: 120 },
+    { cls: 'num c-amount', width: 72 }
+  ];
   return (
     <div className="table-wrap" aria-hidden="true">
-      <table className="data">
+      <table className="data stack">
         <tbody>
           {Array.from({ length: 6 }).map((_, row) => (
             <tr key={row}>
-              {widths.map((w, col) => (
-                <td key={col} className={col === widths.length - 1 ? 'num' : undefined}>
+              {cells.map((cell) => (
+                <td key={cell.cls} className={cell.cls}>
                   <span
                     className="skeleton skeleton-line"
-                    style={{ width: w, marginLeft: col === widths.length - 1 ? 'auto' : 0 }}
+                    style={{ width: cell.width, marginLeft: cell.cls.includes('num') ? 'auto' : 0 }}
                   />
                 </td>
               ))}

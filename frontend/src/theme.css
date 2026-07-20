@@ -245,6 +245,49 @@ table.data td {
 table.data tbody tr:last-child td { border-bottom: none; }
 table.data tbody tr:hover td { background: var(--surface-2); }
 td.num, th.num { text-align: right; white-space: nowrap; }
+table.data td.c-desc { color: var(--muted); }
+
+/* ---------- tabela que vira lista no celular ----------
+   Seis colunas num visor de 360px viravam rolagem horizontal, e o celular é
+   a tela principal do app. Abaixo de 620px cada linha vira um cartão: tipo e
+   valor em cima, descrição no meio, data · categoria e ações embaixo. Um
+   único markup — quem manda no arranjo é o CSS, não um segundo componente. */
+@media (max-width: 620px) {
+  table.data.stack,
+  table.data.stack tbody { display: block; }
+  table.data.stack thead { display: none; }
+
+  table.data.stack tbody tr {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "type type   amount"
+      "desc desc   desc"
+      "date cat    actions";
+    align-items: center;
+    gap: 4px 8px;
+    padding: 12px 2px;
+    border-bottom: 1px solid var(--line);
+  }
+  table.data.stack tbody tr:last-child { border-bottom: none; }
+  table.data.stack tbody tr:hover td { background: transparent; }
+  table.data.stack td { display: block; padding: 0; border-bottom: none; }
+
+  table.data.stack td.c-type { grid-area: type; }
+  table.data.stack td.c-amount { grid-area: amount; text-align: right; font-size: 15px; }
+  table.data.stack td.c-desc { grid-area: desc; color: var(--ink); font-size: 14.5px; }
+  table.data.stack td.c-date { grid-area: date; font-size: 12.5px; color: var(--muted); }
+  table.data.stack td.c-cat { grid-area: cat; font-size: 12.5px; color: var(--muted); }
+  table.data.stack td.c-cat::before { content: "·"; margin-right: 6px; }
+  table.data.stack td.c-actions { grid-area: actions; }
+
+  /* editando, os campos precisam da largura toda: uma pergunta por linha */
+  table.data.stack tbody tr.is-editing { display: block; padding: 14px 2px; }
+  table.data.stack tbody tr.is-editing td { padding: 4px 0; }
+  table.data.stack tbody tr.is-editing td.c-amount { text-align: left; }
+  table.data.stack tbody tr.is-editing td.c-cat::before { content: none; }
+  table.data.stack tbody tr.is-editing td.c-amount input { width: 100% !important; text-align: left !important; }
+}
 
 /* ---------- pílula de tipo (status = cor + ícone + rótulo) ---------- */
 .pill {
