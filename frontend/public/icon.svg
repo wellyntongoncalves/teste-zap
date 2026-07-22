@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <!-- Gerado por scripts/gerar-icones.mjs a partir de BrandMark.js. -->
+  <rect width="24" height="24" rx="5.3" fill="#07110d"/>
+  <g fill="none" stroke="#35d07f" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"
+     transform="translate(12 12) scale(0.72) translate(-12 -12)">
+    <path d="M12 2.5 4 5.6v6.1c0 4.7 3.2 8.4 8 9.8 4.8-1.4 8-5.1 8-9.8V5.6L12 2.5Z"/>
+    <path d="M8.4 15.6V9.6l3.6 3.5 3.6-3.5v6"/>
+  </g>
+</svg>
