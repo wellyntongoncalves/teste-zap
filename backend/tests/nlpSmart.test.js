@@ -1,6 +1,13 @@
 // SDK mockado: os testes não gastam chave nem dependem de rede. O que importa
 // é o contrato — quando o LLM é chamado, quando NÃO é, e o que acontece quando
 // ele falha.
+//
+// A frase que representa "o regex desistiu" tem que ser escolhida com cuidado.
+// Estes testes usavam "almocei com a galera, saiu 80 pila" até o dia em que o
+// regex aprendeu gíria de dinheiro ("pila", "conto", "mango") — aí ele passou a
+// resolver a frase sozinho, e três testes começaram a falhar acusando um bug
+// que não existia: o produto tinha melhorado. Agora a frase é "saiu oitenta",
+// com o valor **por extenso**, que é justamente o caso para o qual o LLM existe.
 const mockCreate = jest.fn();
 
 jest.mock('@anthropic-ai/sdk', () => {
@@ -41,7 +48,7 @@ describe('NLP híbrido (regex + LLM)', () => {
       })
     );
 
-    const result = await parseMessageSmart('almocei com a galera, saiu 80 pila');
+    const result = await parseMessageSmart('almocei com a galera, saiu oitenta');
 
     expect(mockCreate).toHaveBeenCalledTimes(1);
     expect(result.valid).toBe(true);
@@ -77,14 +84,14 @@ describe('NLP híbrido (regex + LLM)', () => {
   it('falha da API não impede o usuário de usar o app', async () => {
     mockCreate.mockRejectedValue(new Error('boom'));
 
-    const result = await parseMessageSmart('almocei com a galera, saiu 80 pila');
+    const result = await parseMessageSmart('almocei com a galera, saiu oitenta');
     expect(result.valid).toBe(false); // volta pro veredito do regex, sem estourar
   });
 
   it('sem chave configurada, não tenta o LLM', async () => {
     delete process.env.ANTHROPIC_API_KEY;
 
-    const result = await parseMessageSmart('almocei com a galera, saiu 80 pila');
+    const result = await parseMessageSmart('almocei com a galera, saiu oitenta');
 
     expect(mockCreate).not.toHaveBeenCalled();
     expect(result.valid).toBe(false);

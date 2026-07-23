@@ -11,7 +11,7 @@ app nativo iOS/Mac.
 
 ```
 /backend      Node.js + Express + Sequelize (PostgreSQL)
-/frontend     React + React Router + Chart.js (PWA)
+/frontend     React + React Router (PWA)
 /database     Migrations e seeders SQL
 ```
 
@@ -158,15 +158,22 @@ ambiente de desenvolvimento local sem conta Twilio), a validação é pulada.
 ```bash
 cd backend
 npm install
-npm test
+npm test        # tudo — exige Postgres
+npm run test:unit   # só o que não encosta no banco — não exige nada
 ```
 
-Usa Jest + Supertest (53 testes em 9 suítes). `tests/nlp.test.js` cobre a extração
-de valor/categoria/tipo sem depender de banco. As demais (`auth`, `accounts`,
-`transactions`, `whatsapp`, `tags`, `budgets`, `creditCards`, `goals`) sobem o app
-via `supertest` (sem precisar de `app.listen`) contra um banco `meubolso_test`
-dedicado — criado automaticamente pelo `tests/globalSetup.js` caso não exista.
-Requer um Postgres acessível (local ou via `docker-compose up postgres`).
+Usa Jest + Supertest: **130 testes em 19 suítes**.
+
+Seis suítes são de lógica pura (`nlp`, `nlpSmart`, `questionRouting`, `money`,
+`dates`, `recurrenceDates`) e rodam sem banco nenhum — é o que `npm run
+test:unit` executa, via `jest.unit.config.js`. As outras treze sobem o app via
+`supertest` (sem precisar de `app.listen`) contra um banco `meubolso_test`
+dedicado, criado automaticamente pelo `tests/globalSetup.js` caso não exista.
+
+> `npm test` roda o `globalSetup` **antes de qualquer suíte**, então numa máquina
+> sem Postgres ele falha sem executar nem os testes que não precisam de banco.
+> É por isso que o `test:unit` existe: numa máquina limpa ele é o que dá para
+> rodar, e cobre justamente o parser do WhatsApp.
 
 Rodando dentro do Docker (sem precisar instalar Node no host):
 
@@ -275,10 +282,13 @@ hora e mandamos a resposta do Vero quando fica pronta.
 
 `services/nlpSmart.js` tenta o regex primeiro e só chama o LLM quando ele
 desiste. O regex acerta o caso comum ("Gastei 50 reais no mercado"), é
-instantâneo e não custa nada — não faz sentido pagar uma chamada por ele. O LLM
-entra para o que palavra-chave não pega ("almocei com a galera, saiu 80 pila")
-e usa `claude-haiku-4-5` com saída estruturada, porque parsear texto livre e
-torcer seria pior.
+instantâneo e não custa nada — não faz sentido pagar uma chamada por ele. O
+regex também entende gíria de dinheiro ("80 pila", "50 conto", "20 mango"), o
+que tira mais casos comuns da fila do LLM.
+
+O LLM entra para o que palavra-chave não pega — valor por extenso, sobretudo
+("almocei com a galera, saiu oitenta") — e usa `claude-haiku-4-5` com saída
+estruturada, porque parsear texto livre e torcer seria pior.
 
 Se o LLM falhar ou não houver chave, vale o veredito do regex: uma indisponi-
 bilidade da API não pode impedir alguém de registrar um gasto.
